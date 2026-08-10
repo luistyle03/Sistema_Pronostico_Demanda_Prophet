@@ -69,3 +69,30 @@ def resumir_archivo(ruta: Path):
         fecha_min = lo if fecha_min is None or lo < fecha_min else fecha_min
         fecha_max = hi if fecha_max is None or hi > fecha_max else fecha_max
     return filas_totales, fecha_min, fecha_max, len(tiendas)
+
+# --------------- PASADA 1b: elegibilidad por par tienda-producto ---------------
+def evaluar_elegibilidad(ruta: Path, dias_totales: int):
+    """Aplica los criterios de inclusión del Plan §7.3 por cada par tienda-producto.
+
+    promedio diario = suma de ventas positivas / días del periodo completo;
+    proporción de ceros = 1 − (días con venta / días del periodo). El archivo de
+    Kaggle viene ordenado por fecha, por lo que contar filas con venta > 0
+    aproxima fielmente los días con venta (mismo criterio que la herramienta de
+    producción preparar_favorita.py del proyecto)."""
+    suma: dict[tuple[int, int], float] = {}
+    dias_venta: dict[tuple[int, int], int] = {}
+    for lote in pd.read_csv(ruta, usecols=COLUMNAS_FUENTE, dtype=TIPOS_FUENTE,
+                            chunksize=TAMANO_LOTE):
+        positivas = lote[lote["unit_sales"] > 0]
+        agregado = positivas.groupby(["store_nbr", "item_nbr"])["unit_sales"].agg(["sum", "count"])
+        for (t, p), fila in agregado.iterrows():
+            clave = (int(t), int(p))
+            suma[clave] = suma.get(clave, 0.0) + float(fila["sum"])
+            dias_venta[clave] = dias_venta.get(clave, 0) + int(fila["count"])
+    elegibles: dict[int, list[int]] = {}
+    for (tienda, producto), total in suma.items():
+        promedio = total / dias_totales
+        prop_ceros = 1.0 - dias_venta[(tienda, producto)] / dias_totales
+        if promedio >= UMBRAL_PROMEDIO_DIARIO and prop_ceros <= UMBRAL_PROP_CEROS:
+            elegibles.setdefault(tienda, []).append(producto)
+    return elegibles, len(suma)
