@@ -1,0 +1,38 @@
+[project]
+name = "spd-tesis"
+version = "0.1.0"
+description = "Sistema de Pronóstico de Demanda (SPD) basado en el algoritmo Prophet"
+readme = "LEEME.md"
+requires-python = ">=3.14"
+dependencies = [
+    "flask>=3.1.3",
+    "holidays>=0.102",
+    "numpy>=2.5.1",
+    "openpyxl>=3.1.5",
+    "pandas>=3.0.5",
+    "prophet>=1.3.0",
+    "scikit-learn>=1.9.0",
+    "scipy>=1.18.0",
+    "statsmodels>=0.14.6",
+]
+
+# Configuración de estilo y análisis estático (estándar PEP 8)
+[tool.black]
+line-length = 88
+target-version = ["py314"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py314"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]   # errores de estilo (E), pyflakes (F), orden de imports (I)
+
+[tool.pytest.ini_options]
+testpaths = ["pruebas"]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+]

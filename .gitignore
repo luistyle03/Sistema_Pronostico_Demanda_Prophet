@@ -1,0 +1,22 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.spec.bak
+.DS_Store
+
+# Artefactos generados (no se versionan)
+validacion_instrumento.xlsx
+resultados_evaluacion.xlsx
+robustez.xlsx
+contraste.xlsx
+reporte_pruebas.txt
+datos_demo.csv
+ficha_datos_demo.xlsx
+favorita_*.csv
