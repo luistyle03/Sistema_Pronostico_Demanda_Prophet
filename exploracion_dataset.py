@@ -152,3 +152,59 @@ def construir_series_diarias(df: pd.DataFrame):
                   "devoluciones_truncadas": n_negativos,
                   "atipicos_detectados_conservados": n_atipicos}
     return pd.concat(series, ignore_index=True), pd.DataFrame(resumen), decisiones
+
+
+# ------------------------------- Reporte -------------------------------
+def escribir_reporte(dir_salida: Path, es_demo: bool, filas: int, fmin: str, fmax: str,
+                     n_tiendas_archivo: int, pares_evaluados: int, tiendas: list[int],
+                     pares: list[tuple[int, int]], resumen: pd.DataFrame, decisiones: dict) -> None:
+    aviso = ("> **AVISO:** reporte del modo `--demo` (datos sintéticos), solo para validar "
+             "el script. Las cifras reales salen de ejecutar con `--fuente train.csv`.\n\n"
+             if es_demo else "")
+    por_tienda = {}
+    for t, p in pares:
+        por_tienda.setdefault(t, []).append(p)
+    lista_muestra = "\n".join(f"- Tienda {t}: productos {ps}" for t, ps in sorted(por_tienda.items()))
+    md = f"""# Reporte de exploración y limpieza del dataset — Semana S9
+[PXP: Fase de Exploración] · Tesis SPD · Semilla: {SEMILLA}
+
+{aviso}## 1. Archivo fuente
+| Métrica | Valor |
+|---|---|
+| Filas leídas | {filas:,} |
+| Periodo cubierto | {fmin} a {fmax} |
+| Tiendas en el archivo | {n_tiendas_archivo} |
+| Pares tienda-producto evaluados | {pares_evaluados:,} |
+| Series de la muestra | {len(pares)} ({len(tiendas)} tiendas × {N_PRODUCTOS} productos) |
+
+## 2. Criterios de inclusión y muestreo (Plan de Tesis, §7.3)
+**Inclusión:** promedio ≥ {UMBRAL_PROMEDIO_DIARIO:g} unidades/día y ≤ {UMBRAL_PROP_CEROS:.0%} de días
+sin venta. Se excluye la demanda intermitente (Croston, 1972; Syntetos y Boylan, 2005),
+que requiere métodos especializados ajenos a los cinco modelos comparados.
+**Muestreo aleatorio estratificado en dos etapas** (Lohr, 2010), semilla {SEMILLA}:
+etapa 1, {N_TIENDAS} tiendas sorteadas entre las que tienen ≥ {N_PRODUCTOS} productos elegibles;
+etapa 2, {N_PRODUCTOS} productos elegibles sorteados por tienda (pueden diferir entre tiendas).
+
+{lista_muestra}
+
+## 3. Diccionario de datos (dataset_limpio.csv)
+| Columna | Tipo | Descripción |
+|---|---|---|
+| fecha | fecha (AAAA-MM-DD) | día calendario, serie continua sin huecos |
+| tienda | entero | identificador de la tienda |
+| producto | entero | identificador del producto |
+| unidades | decimal ≥ 0 | unidades vendidas en el día |
+
+## 4. Decisiones de limpieza aplicadas
+| N.º | Situación | Regla | Casos |
+|---|---|---|---|
+| D1 | Días sin registro | Se rellenan con 0: en retail la ausencia de fila es "no hubo venta" | {decisiones['dias_sin_registro_a_cero']:,} |
+| D2 | Ventas netas negativas | Se truncan a 0: la variable de estudio es la demanda de venta | {decisiones['devoluciones_truncadas']:,} |
+| D3 | Picos atípicos (> Q3 + 3·RIC) | Se detectan y reportan pero SE CONSERVAN: son demanda real | {decisiones['atipicos_detectados_conservados']:,} |
+
+## 5. Estadísticos por serie (primeras 10)
+{resumen.head(10).to_markdown(index=False)}
+
+*(tabla completa en series_resumen.csv — reproducible con la misma semilla)*
+"""
+    (dir_salida / "reporte_eda.md").write_text(md, encoding="utf-8")
