@@ -96,3 +96,19 @@ def evaluar_elegibilidad(ruta: Path, dias_totales: int):
         if promedio >= UMBRAL_PROMEDIO_DIARIO and prop_ceros <= UMBRAL_PROP_CEROS:
             elegibles.setdefault(tienda, []).append(producto)
     return elegibles, len(suma)
+
+
+# --------------- Muestreo aleatorio estratificado en dos etapas ---------------
+def seleccionar_muestra(elegibles: dict[int, list[int]]):
+    """Etapa 1: 10 tiendas al azar entre las que tienen ≥ 5 productos elegibles.
+    Etapa 2: 5 productos elegibles al azar POR TIENDA (Lohr, 2010; Plan §7.3)."""
+    azar = random.Random(SEMILLA)
+    validas = sorted(t for t, productos in elegibles.items() if len(productos) >= N_PRODUCTOS)
+    if len(validas) < N_TIENDAS:
+        print(f"[aviso] solo {len(validas)} tiendas cumplen el criterio; se usan todas.")
+    tiendas = sorted(azar.sample(validas, min(N_TIENDAS, len(validas))))
+    pares: list[tuple[int, int]] = []
+    for tienda in tiendas:
+        productos = sorted(azar.sample(sorted(elegibles[tienda]), N_PRODUCTOS))
+        pares.extend((tienda, producto) for producto in productos)
+    return tiendas, pares
