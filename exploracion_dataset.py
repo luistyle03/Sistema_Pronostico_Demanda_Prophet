@@ -126,3 +126,29 @@ def cargar_muestra(ruta: Path, pares: list[tuple[int, int]]) -> pd.DataFrame:
     df = pd.concat(partes, ignore_index=True)
     df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
     return df
+
+
+# --------------- Limpieza: series diarias continuas (D1–D3) ---------------
+def construir_series_diarias(df: pd.DataFrame):
+    diario = (df.groupby(["store_nbr", "item_nbr", "date"], as_index=False)["unit_sales"].sum())
+    n_negativos = int((diario["unit_sales"] < 0).sum())
+    diario["unit_sales"] = diario["unit_sales"].clip(lower=0.0)     # D2: devoluciones -> 0
+    rango = pd.date_range(diario["date"].min(), diario["date"].max(), freq="D")
+    series, resumen = [], []
+    n_dias_sin_registro = 0
+    n_atipicos = 0
+    for (tienda, producto), grupo in diario.groupby(["store_nbr", "item_nbr"]):
+        s = grupo.set_index("date")["unit_sales"].reindex(rango)
+        n_dias_sin_registro += int(s.isna().sum())
+        s = s.fillna(0.0)                                            # D1: sin registro -> 0
+        q1, q3 = s.quantile(0.25), s.quantile(0.75)
+        n_atipicos += int((s > q3 + 3.0 * (q3 - q1)).sum())          # D3: se reportan, se conservan
+        series.append(pd.DataFrame({"fecha": s.index.date, "tienda": int(tienda),
+                                    "producto": int(producto), "unidades": s.to_numpy()}))
+        resumen.append({"tienda": int(tienda), "producto": int(producto), "dias": int(len(s)),
+                        "media": round(float(s.mean()), 2), "mediana": round(float(s.median()), 2),
+                        "pct_ceros": round(100 * float((s == 0).mean()), 1)})
+    decisiones = {"dias_sin_registro_a_cero": n_dias_sin_registro,
+                  "devoluciones_truncadas": n_negativos,
+                  "atipicos_detectados_conservados": n_atipicos}
+    return pd.concat(series, ignore_index=True), pd.DataFrame(resumen), decisiones
