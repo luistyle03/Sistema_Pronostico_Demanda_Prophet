@@ -112,3 +112,17 @@ def seleccionar_muestra(elegibles: dict[int, list[int]]):
         productos = sorted(azar.sample(sorted(elegibles[tienda]), N_PRODUCTOS))
         pares.extend((tienda, producto) for producto in productos)
     return tiendas, pares
+
+
+# --------------- PASADA 2: cargar solo los pares de la muestra ---------------
+def cargar_muestra(ruta: Path, pares: list[tuple[int, int]]) -> pd.DataFrame:
+    pares_df = pd.DataFrame(pares, columns=["store_nbr", "item_nbr"])
+    partes = []
+    for lote in pd.read_csv(ruta, usecols=COLUMNAS_FUENTE, dtype=TIPOS_FUENTE,
+                            chunksize=TAMANO_LOTE):
+        sub = lote.merge(pares_df, on=["store_nbr", "item_nbr"])
+        if len(sub):
+            partes.append(sub)
+    df = pd.concat(partes, ignore_index=True)
+    df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
+    return df
