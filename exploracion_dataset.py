@@ -223,3 +223,49 @@ def graficar_muestra(panel: pd.DataFrame, dir_salida: Path) -> None:
     fig.savefig(dir_salida / "grafico_eda.png", dpi=150)
     plt.close(fig)
 
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Exploración y limpieza (S9)")
+    grupo = parser.add_mutually_exclusive_group(required=True)
+    grupo.add_argument("--fuente", type=Path, help="ruta a train.csv (Kaggle)")
+    grupo.add_argument("--demo", action="store_true")
+    parser.add_argument("--salida", type=Path, default=Path("salidas"))
+    args = parser.parse_args()
+    dir_salida = args.salida
+    dir_salida.mkdir(parents=True, exist_ok=True)
+    ruta = (dir_salida / "datos_demo.csv") if args.demo else args.fuente
+    if args.demo:
+        generar_datos_demo(ruta)
+
+    print("[1/6] Pasada 1a: métricas globales del archivo...")
+    filas, fmin, fmax, n_tiendas_arch = resumir_archivo(ruta)
+    dias_totales = (pd.to_datetime(fmax) - pd.to_datetime(fmin)).days + 1
+    print(f"      {filas:,} filas · {fmin} a {fmax} ({dias_totales} días) · {n_tiendas_arch} tiendas")
+
+    print("[2/6] Pasada 1b: criterios de inclusión del Plan §7.3...")
+    elegibles, pares_evaluados = evaluar_elegibilidad(ruta, dias_totales)
+    n_eleg = sum(len(v) for v in elegibles.values())
+    print(f"      {pares_evaluados:,} pares evaluados; {n_eleg:,} elegibles "
+          f"(≥{UMBRAL_PROMEDIO_DIARIO:g} u/día y ≤{UMBRAL_PROP_CEROS:.0%} ceros)")
+
+    print("[3/6] Muestreo aleatorio estratificado en dos etapas (semilla fija)...")
+    tiendas, pares = seleccionar_muestra(elegibles)
+    print(f"      tiendas={tiendas}")
+
+    print("[4/6] Pasada 2: cargando solo la muestra...")
+    df = cargar_muestra(ruta, pares)
+
+    print("[5/6] Limpieza y series diarias continuas (D1–D3)...")
+    panel, resumen, decisiones = construir_series_diarias(df)
+    panel.to_csv(dir_salida / "dataset_limpio.csv", index=False)
+    resumen.to_csv(dir_salida / "series_resumen.csv", index=False)
+
+    print("[6/6] Reporte y gráfico...")
+    escribir_reporte(dir_salida, args.demo, filas, str(fmin), str(fmax), n_tiendas_arch,
+                     pares_evaluados, tiendas, pares, resumen, decisiones)
+    graficar_muestra(panel, dir_salida)
+    print(f"LISTO: revisa {dir_salida}/")
+
+
+if __name__ == "__main__":
+    main()
