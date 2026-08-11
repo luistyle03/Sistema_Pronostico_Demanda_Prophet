@@ -208,3 +208,18 @@ etapa 2, {N_PRODUCTOS} productos elegibles sorteados por tienda (pueden diferir 
 *(tabla completa en series_resumen.csv — reproducible con la misma semilla)*
 """
     (dir_salida / "reporte_eda.md").write_text(md, encoding="utf-8")
+
+def graficar_muestra(panel: pd.DataFrame, dir_salida: Path) -> None:
+    pares = panel[["tienda", "producto"]].drop_duplicates().head(2).to_numpy()
+    fig, ejes = plt.subplots(len(pares), 1, figsize=(10, 5.5), sharex=True)
+    ejes = np.atleast_1d(ejes)
+    for eje, (tienda, producto) in zip(ejes, pares):
+        s = panel[(panel["tienda"] == tienda) & (panel["producto"] == producto)]
+        eje.plot(s["fecha"], s["unidades"], linewidth=0.7)
+        eje.set_title(f"Tienda {tienda} · Producto {producto}", fontsize=10)
+        eje.set_ylabel("unidades")
+    fig.suptitle("Series diarias limpias — muestra de inspección (S9)")
+    fig.tight_layout()
+    fig.savefig(dir_salida / "grafico_eda.png", dpi=150)
+    plt.close(fig)
+
