@@ -51,3 +51,14 @@ class PuertoExportadorPronostico(ABC):
     @abstractmethod
     def exportar_evaluacion(self, filas: List[dict], pruebas: List[dict]) -> bytes:
         """Devuelve los bytes de un .xlsx con la evidencia del Módulo 1."""
+
+
+@dataclass
+class ResultadoPruebaPareada:
+    """Salida de una comparación estadística pareada entre dos modelos."""
+
+    comparacion: str
+    p_valor_t: float
+    p_valor_wilcoxon: float
+    d_cohen: float
+    n: int
