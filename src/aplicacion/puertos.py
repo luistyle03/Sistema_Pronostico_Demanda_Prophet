@@ -62,3 +62,17 @@ class ResultadoPruebaPareada:
     p_valor_wilcoxon: float
     d_cohen: float
     n: int
+
+
+class PuertoPruebasEstadisticas(ABC):
+    """
+    Contrato para las pruebas inferenciales del plan de tesis: t pareada,
+    Wilcoxon y tamaño del efecto d de Cohen. El caso de uso pide "compara
+    estos dos vectores de MAPE" y no sabe (ni le importa) que scipy lo hace.
+    """
+
+    @abstractmethod
+    def comparar_pareado(
+        self, etiqueta: str, errores_a: Sequence[float], errores_b: Sequence[float]
+    ) -> ResultadoPruebaPareada:
+        """Compara los errores del modelo A contra los del modelo B, serie a serie."""
