@@ -1,6 +1,24 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+"""
+exploracion_dataset.py — [PXP: Fase de Exploración] · Semana S9  
+=============================================================================================
+Prepara el insumo del experimento desde "train.csv" (Corporación Favorita, Kaggle):
+aplica los CRITERIOS DE INCLUSIÓN del Plan de Tesis y el MUESTREO ALEATORIO
+ESTRATIFICADO EN DOS ETAPAS (Lohr, 2010) para obtener las 50 series de estudio.
+
+Criterios de inclusión: se excluyen las series de demanda intermitente
+(más del 15 % de días sin venta; Croston, 1972; Syntetos y Boylan, 2005) y las de
+bajo volumen (< 30 unidades diarias en promedio).
+Muestreo: etapa 1, se sortean 10 tiendas entre las que tienen ≥ 5
+productos elegibles; etapa 2, se sortean 5 productos elegibles POR TIENDA
+(pueden diferir entre tiendas). Semilla fija = 42 (reproducible por el jurado).
+
+USO REAL:   python exploracion_dataset.py --fuente ruta/a/train.csv
+USO DEMO:   python exploracion_dataset.py --demo      (sintético, solo para validar)
+SALIDAS (./salidas): dataset_limpio.csv · reporte_eda.md · series_resumen.csv · grafico_eda.png
+"""
 
 from __future__ import annotations
 
