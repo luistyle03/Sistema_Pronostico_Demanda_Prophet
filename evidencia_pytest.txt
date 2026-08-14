@@ -1,0 +1,14 @@
+============================= test session starts =============================
+platform win32 -- Python 3.14.6, pytest-9.1.1, pluggy-1.6.0 -- C:\Tesis\SPD\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Tesis\SPD
+configfile: pyproject.toml
+plugins: cov-7.1.0
+collecting ... collected 4 items
+
+pruebas/test_s10_nucleo_y_prophet.py::test_dividir_rechaza_particiones_imposibles PASSED [ 25%]
+pruebas/test_s10_nucleo_y_prophet.py::test_generador_exige_minimo_historico PASSED [ 50%]
+pruebas/test_s10_nucleo_y_prophet.py::test_generador_resumen_gerencial_correcto PASSED [ 75%]
+pruebas/test_s10_nucleo_y_prophet.py::test_adaptador_prophet_cumple_contrato PASSED [100%]
+
+============================== 4 passed in 4.56s ==============================
