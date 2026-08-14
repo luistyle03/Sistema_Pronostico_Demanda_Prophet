@@ -6,6 +6,7 @@ implementa. Los casos de uso dependen solo de estos puertos (Principio de
 Inversión de Dependencias — la D de SOLID). Prophet, ARIMA, openpyxl o
 scipy viven afuera, en adaptadores que cumplen estos contratos.
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

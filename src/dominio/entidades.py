@@ -7,6 +7,7 @@ evaluación) expresados en Python puro: NO se importa pandas, ni Prophet,
 ni Flask. Gracias a eso, el corazón del sistema no depende de ninguna
 tecnología y puede probarse de forma aislada.
 """
+
 from __future__ import annotations
 
 import math
@@ -83,12 +84,14 @@ class ComponentesPronostico:
     negocio POR QUÉ el sistema pronostica ese número.
     """
 
-    fechas: List[date]                             # Eje temporal de tendencia y feriados.
-    tendencia: List[float]                         # Nivel base y su evolución.
-    perfil_semanal: Optional[List[float]] = None   # 7 efectos: lunes .. domingo.
-    perfil_anual_dias: Optional[List[str]] = None  # Etiquetas 'MM-DD' (enero .. diciembre).
-    perfil_anual: Optional[List[float]] = None     # Efecto por día del año.
-    feriados: Optional[List[float]] = None         # Efecto de feriados (mismo eje que fechas).
+    fechas: List[date]  # Eje temporal de tendencia y feriados.
+    tendencia: List[float]  # Nivel base y su evolución.
+    perfil_semanal: Optional[List[float]] = None  # 7 efectos: lunes .. domingo.
+    perfil_anual_dias: Optional[List[str]] = (
+        None  # Etiquetas 'MM-DD' (enero .. diciembre).
+    )
+    perfil_anual: Optional[List[float]] = None  # Efecto por día del año.
+    feriados: Optional[List[float]] = None  # Efecto de feriados (mismo eje que fechas).
 
 
 @dataclass
@@ -117,9 +120,9 @@ class ResultadoModelo:
     rmse: float
     rmsse: float
     segundos: float
-    wape: float = math.inf       # % ponderado por volumen (estándar retail).
-    mae: float = math.inf        # error medio en UNIDADES (directo para inventario).
-    sesgo: float = 0.0           # dirección del error: +subestima / −sobreestima.
+    wape: float = math.inf  # % ponderado por volumen (estándar retail).
+    mae: float = math.inf  # error medio en UNIDADES (directo para inventario).
+    sesgo: float = 0.0  # dirección del error: +subestima / −sobreestima.
     error: Optional[str] = None  # Si el modelo falló, aquí queda el motivo.
 
     @property

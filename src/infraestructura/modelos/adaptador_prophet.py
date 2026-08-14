@@ -5,6 +5,7 @@ Este adaptador "traduce" entre el lenguaje del dominio (SerieTemporal,
 Pronostico) y el lenguaje de la librería prophet de Meta (DataFrames con
 columnas ds/y). Es el ÚNICO archivo del sistema que importa prophet.
 """
+
 from __future__ import annotations
 
 import logging
@@ -82,8 +83,8 @@ class AdaptadorProphet(PuertoModeloPronostico):
         if self._modelo is None:
             raise ModeloNoEntrenadoError("Prophet: debe llamarse entrenar() primero.")
         futuro = self._modelo.make_future_dataframe(periods=horizonte, freq="D")
-        completo = self._modelo.predict(futuro)   # Historia ajustada + futuro.
-        prediccion = completo.tail(horizonte)     # Solo el futuro, para el pronóstico.
+        completo = self._modelo.predict(futuro)  # Historia ajustada + futuro.
+        prediccion = completo.tail(horizonte)  # Solo el futuro, para el pronóstico.
         return Pronostico(
             nombre_modelo=self.nombre,
             fechas=[marca.date() for marca in prediccion["ds"]],
@@ -110,15 +111,23 @@ class AdaptadorProphet(PuertoModeloPronostico):
         )
         if "weekly" in completo.columns:
             ultimos_7 = completo.tail(7)
-            efecto_por_dia = {int(marca.weekday()): float(valor)
-                              for marca, valor in zip(ultimos_7["ds"], ultimos_7["weekly"])}
-            componentes.perfil_semanal = [efecto_por_dia[d] for d in range(7)]  # lun..dom
+            efecto_por_dia = {
+                int(marca.weekday()): float(valor)
+                for marca, valor in zip(ultimos_7["ds"], ultimos_7["weekly"])
+            }
+            componentes.perfil_semanal = [
+                efecto_por_dia[d] for d in range(7)
+            ]  # lun..dom
         if "yearly" in completo.columns:
             ventana_anual = completo.tail(365)
-            efecto_por_fecha = {marca.strftime("%m-%d"): float(valor)
-                                for marca, valor in zip(ventana_anual["ds"], ventana_anual["yearly"])}
+            efecto_por_fecha = {
+                marca.strftime("%m-%d"): float(valor)
+                for marca, valor in zip(ventana_anual["ds"], ventana_anual["yearly"])
+            }
             componentes.perfil_anual_dias = sorted(efecto_por_fecha)
-            componentes.perfil_anual = [efecto_por_fecha[d] for d in componentes.perfil_anual_dias]
+            componentes.perfil_anual = [
+                efecto_por_fecha[d] for d in componentes.perfil_anual_dias
+            ]
         if "holidays" in completo.columns:
             componentes.feriados = [float(v) for v in completo["holidays"]]
         return componentes

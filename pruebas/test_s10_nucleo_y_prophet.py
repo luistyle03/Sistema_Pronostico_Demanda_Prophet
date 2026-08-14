@@ -1,30 +1,43 @@
 """[S10 · Iteración 1] Núcleo del hexágono + adaptador Prophet.
 El caso de uso se prueba con un doble (sin Prophet): evidencia de la
 inversión de dependencias. El adaptador real se prueba aparte."""
+
 from datetime import date, timedelta
+
 import pytest
-from src.aplicacion.casos_uso.generar_pronostico import GeneradorDePronostico, MINIMO_HISTORICO
+
+from src.aplicacion.casos_uso.generar_pronostico import (
+    MINIMO_HISTORICO,
+    GeneradorDePronostico,
+)
 from src.aplicacion.puertos import PuertoModeloPronostico
-from src.dominio.entidades import PuntoSerie, Pronostico, SerieTemporal
+from src.dominio.entidades import Pronostico, PuntoSerie, SerieTemporal
 from src.dominio.excepciones import SerieMuyCortaError
 from src.infraestructura.modelos.adaptador_prophet import AdaptadorProphet
 from src.infraestructura.modelos.utilidades import fechas_futuras
 
 
 def serie_constante(n, valor=10.0, inicio=date(2026, 1, 1)):
-    return SerieTemporal("prueba", [PuntoSerie(inicio + timedelta(days=i), valor) for i in range(n)])
+    return SerieTemporal(
+        "prueba", [PuntoSerie(inicio + timedelta(days=i), valor) for i in range(n)]
+    )
 
 
 class ModeloConstante(PuertoModeloPronostico):
     def __init__(self, c, etiqueta="constante"):
         self._c, self._etq, self._ultima = c, etiqueta, None
+
     @property
     def nombre(self):
         return self._etq
+
     def entrenar(self, serie):
         self._ultima = serie.fechas()[-1]
+
     def pronosticar(self, horizonte):
-        return Pronostico(self._etq, fechas_futuras(self._ultima, horizonte), [self._c] * horizonte)
+        return Pronostico(
+            self._etq, fechas_futuras(self._ultima, horizonte), [self._c] * horizonte
+        )
 
 
 def test_dividir_rechaza_particiones_imposibles():
@@ -55,15 +68,18 @@ def test_generador_resumen_gerencial_correcto():
 
 def test_adaptador_prophet_cumple_contrato():
     import numpy as np
+
     rng = np.random.default_rng(42)
     inicio = date(2024, 1, 1)
     puntos = []
     for i in range(730):
         f = inicio + timedelta(days=i)
         semana = (1.0, 0.9, 0.9, 1.0, 1.2, 1.6, 1.4)[f.weekday()]
-        puntos.append(PuntoSerie(f, max(0.0, float(rng.normal((20 + 0.01 * i) * semana, 2)))))
+        puntos.append(
+            PuntoSerie(f, max(0.0, float(rng.normal((20 + 0.01 * i) * semana, 2))))
+        )
     serie = SerieTemporal("sintetica", puntos)
-    modelo = AdaptadorProphet()          # parámetros por defecto del DTO
+    modelo = AdaptadorProphet()  # parámetros por defecto del DTO
     modelo.entrenar(serie)
     pron = modelo.pronosticar(30)
     assert len(pron.valores) == 30
