@@ -1,6 +1,7 @@
 """
 CAPA DE INFRAESTRUCTURA — Utilidades compartidas por los adaptadores de modelo.
 """
+
 from __future__ import annotations
 
 from datetime import date, timedelta

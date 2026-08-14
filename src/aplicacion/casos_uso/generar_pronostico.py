@@ -6,6 +6,7 @@ parámetros del usuario (estacionalidades, feriados, etc.), entrena, proyecta
 y traduce el resultado a indicadores de negocio (ResumenGerencial) que el
 dueño del retail entiende de un vistazo.
 """
+
 from __future__ import annotations
 
 from typing import Tuple
@@ -37,7 +38,7 @@ class GeneradorDePronostico:
         modelo.entrenar(serie)
         pronostico = modelo.pronosticar(horizonte)
         return pronostico, self._resumir(serie, pronostico, horizonte)
-    
+
     def _resumir(
         self, serie: SerieTemporal, pronostico: Pronostico, horizonte: int
     ) -> ResumenGerencial:
@@ -52,7 +53,9 @@ class GeneradorDePronostico:
             if total_anterior > 0:
                 variacion = 100.0 * (total_proyectado - total_anterior) / total_anterior
         # Día pico: la fecha futura con mayor venta proyectada.
-        indice_pico = max(range(len(pronostico.valores)), key=lambda i: pronostico.valores[i])
+        indice_pico = max(
+            range(len(pronostico.valores)), key=lambda i: pronostico.valores[i]
+        )
         return ResumenGerencial(
             total_proyectado=total_proyectado,
             total_periodo_anterior=total_anterior,
@@ -61,4 +64,3 @@ class GeneradorDePronostico:
             valor_pico=pronostico.valores[indice_pico],
             promedio_diario=total_proyectado / horizonte,
         )
-    
