@@ -19,11 +19,11 @@ dependencies = [
 
 # Configuración de estilo y análisis estático (estándar PEP 8)
 [tool.black]
-line-length = 88
+line-length = 100
 target-version = ["py314"]
 
 [tool.ruff]
-line-length = 88
+line-length = 100
 target-version = "py314"
 
 [tool.ruff.lint]
