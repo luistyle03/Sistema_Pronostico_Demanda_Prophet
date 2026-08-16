@@ -5,6 +5,7 @@ Holt-Winters modela tres componentes con promedios ponderados que dan más
 peso a lo reciente: nivel, tendencia y estacionalidad. En ventas diarias el
 ciclo natural es la semana, por eso el período estacional por defecto es 7.
 """
+
 from __future__ import annotations
 
 import warnings

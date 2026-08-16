@@ -83,15 +83,10 @@ def probar_modulo_1(evaluador: EvaluadorDeModelos, exportador: ExportadorExcel) 
     ]
     excel = exportador.exportar_evaluacion(filas, [])
     assert excel[:2] == b"PK", "Un .xlsx empieza con la firma ZIP 'PK'."
-    print(
-        f"   Excel de evidencia OK ({len(excel):,} bytes, "
-        f"SHA-256 {sha256_de(excel)[:16]}…)"
-    )
+    print(f"   Excel de evidencia OK ({len(excel):,} bytes, " f"SHA-256 {sha256_de(excel)[:16]}…)")
 
 
-def probar_modulo_2(
-    generador: GeneradorDePronostico, exportador: ExportadorExcel
-) -> None:
+def probar_modulo_2(generador: GeneradorDePronostico, exportador: ExportadorExcel) -> None:
     print("\n[2/3] Módulo 2 — pronóstico Prophet a 28 días con feriados PE…")
     serie = serie_sintetica("Yogurt Fresa 1L")
     parametros = ParametrosPronostico(
@@ -150,9 +145,7 @@ if __name__ == "__main__":
         AdaptadorMediaMovil(),
         AdaptadorRegresionLineal(),
     ]
-    probar_modulo_1(
-        EvaluadorDeModelos(modelos, AdaptadorPruebasScipy()), ExportadorExcel()
-    )
+    probar_modulo_1(EvaluadorDeModelos(modelos, AdaptadorPruebasScipy()), ExportadorExcel())
     probar_modulo_2(GeneradorDePronostico(), ExportadorExcel())
     probar_lector(LectorVentas())
     print("\n" + "=" * 50)

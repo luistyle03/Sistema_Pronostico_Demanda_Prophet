@@ -35,9 +35,7 @@ class ModeloConstante(PuertoModeloPronostico):
         self._ultima = serie.fechas()[-1]
 
     def pronosticar(self, horizonte):
-        return Pronostico(
-            self._etq, fechas_futuras(self._ultima, horizonte), [self._c] * horizonte
-        )
+        return Pronostico(self._etq, fechas_futuras(self._ultima, horizonte), [self._c] * horizonte)
 
 
 def test_dividir_rechaza_particiones_imposibles():
@@ -75,9 +73,7 @@ def test_adaptador_prophet_cumple_contrato():
     for i in range(730):
         f = inicio + timedelta(days=i)
         semana = (1.0, 0.9, 0.9, 1.0, 1.2, 1.6, 1.4)[f.weekday()]
-        puntos.append(
-            PuntoSerie(f, max(0.0, float(rng.normal((20 + 0.01 * i) * semana, 2))))
-        )
+        puntos.append(PuntoSerie(f, max(0.0, float(rng.normal((20 + 0.01 * i) * semana, 2)))))
     serie = SerieTemporal("sintetica", puntos)
     modelo = AdaptadorProphet()  # parámetros por defecto del DTO
     modelo.entrenar(serie)

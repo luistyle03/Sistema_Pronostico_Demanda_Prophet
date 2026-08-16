@@ -1,6 +1,9 @@
 """[S11 · Iteración 2] Contrastes I: promedio móvil y Holt-Winters."""
+
 from datetime import date, timedelta
+
 import pytest
+
 from src.dominio.entidades import PuntoSerie, SerieTemporal
 from src.dominio.excepciones import ModeloNoEntrenadoError, SerieMuyCortaError
 from src.infraestructura.modelos.adaptador_holt_winters import AdaptadorHoltWinters
@@ -8,7 +11,9 @@ from src.infraestructura.modelos.adaptador_media_movil import AdaptadorMediaMovi
 
 
 def serie(valores, inicio=date(2026, 1, 1)):
-    return SerieTemporal("s", [PuntoSerie(inicio + timedelta(days=i), float(v)) for i, v in enumerate(valores)])
+    return SerieTemporal(
+        "s", [PuntoSerie(inicio + timedelta(days=i), float(v)) for i, v in enumerate(valores)]
+    )
 
 
 def test_media_movil_de_serie_constante_es_constante():
@@ -39,6 +44,3 @@ def test_holt_winters_degrada_con_serie_corta():
     m = AdaptadorHoltWinters(periodo_estacional=7)
     m.entrenar(serie([5, 6, 7, 8, 9, 10, 11, 12, 13, 14]))  # < 2 ciclos
     assert len(m.pronosticar(5).valores) == 5
-
-
-

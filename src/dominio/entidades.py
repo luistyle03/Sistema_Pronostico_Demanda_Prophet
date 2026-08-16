@@ -87,9 +87,7 @@ class ComponentesPronostico:
     fechas: List[date]  # Eje temporal de tendencia y feriados.
     tendencia: List[float]  # Nivel base y su evolución.
     perfil_semanal: Optional[List[float]] = None  # 7 efectos: lunes .. domingo.
-    perfil_anual_dias: Optional[List[str]] = (
-        None  # Etiquetas 'MM-DD' (enero .. diciembre).
-    )
+    perfil_anual_dias: Optional[List[str]] = None  # Etiquetas 'MM-DD' (enero .. diciembre).
     perfil_anual: Optional[List[float]] = None  # Efecto por día del año.
     feriados: Optional[List[float]] = None  # Efecto de feriados (mismo eje que fechas).
 
