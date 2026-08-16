@@ -6,6 +6,7 @@ Captura la tendencia general (crece o decrece) pero, por construcción, es
 ciega a la estacionalidad: esa limitación es justamente parte del contraste
 que el experimento de la tesis quiere evidenciar.
 """
+
 from __future__ import annotations
 
 import numpy as np
