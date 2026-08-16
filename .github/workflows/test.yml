@@ -17,5 +17,8 @@ jobs:
         run: uv sync
       - name: Ejecutar la batería de 32 pruebas
         run: uv run python -m pytest pruebas -v
+      - name: Ver versión de Ruff
+        run: uv run --with ruff ruff --version
       - name: Revisar el estilo PEP 8
         run: uv run --with ruff ruff check src pruebas herramientas
+      
