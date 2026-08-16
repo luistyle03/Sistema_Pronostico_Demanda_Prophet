@@ -53,9 +53,7 @@ class GeneradorDePronostico:
             if total_anterior > 0:
                 variacion = 100.0 * (total_proyectado - total_anterior) / total_anterior
         # Día pico: la fecha futura con mayor venta proyectada.
-        indice_pico = max(
-            range(len(pronostico.valores)), key=lambda i: pronostico.valores[i]
-        )
+        indice_pico = max(range(len(pronostico.valores)), key=lambda i: pronostico.valores[i])
         return ResumenGerencial(
             total_proyectado=total_proyectado,
             total_periodo_anterior=total_anterior,

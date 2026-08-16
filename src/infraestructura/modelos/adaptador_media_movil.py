@@ -5,6 +5,7 @@ Es la línea base ingenua del experimento: "mañana se venderá el promedio de
 los últimos k días". No necesita ninguna librería; es el modelo que un
 tendero calcula mentalmente, y por eso es el piso justo de la comparación.
 """
+
 from __future__ import annotations
 
 from src.aplicacion.puertos import PuertoModeloPronostico
@@ -32,7 +33,7 @@ class AdaptadorMediaMovil(PuertoModeloPronostico):
             raise SerieMuyCortaError(
                 f"Promedio móvil: se necesitan al menos {self._ventana} observaciones."
             )
-        ultimos = valores[-self._ventana:]
+        ultimos = valores[-self._ventana :]
         self._promedio = sum(ultimos) / self._ventana
         self._ultima_fecha = serie.fechas()[-1]
 

@@ -42,9 +42,7 @@ class AdaptadorProphet(PuertoModeloPronostico):
     def entrenar(self, serie: SerieTemporal) -> None:
         """Convierte la serie al formato ds/y de Prophet y ajusta el modelo."""
         p = self._parametros
-        datos = pd.DataFrame(
-            {"ds": pd.to_datetime(serie.fechas()), "y": serie.valores()}
-        )
+        datos = pd.DataFrame({"ds": pd.to_datetime(serie.fechas()), "y": serie.valores()})
         # Feriados personalizados (ej. aniversario de la tienda): Prophet los
         # recibe como un DataFrame con columnas 'holiday' y 'ds' al construirse.
         feriados_df = None
@@ -115,9 +113,7 @@ class AdaptadorProphet(PuertoModeloPronostico):
                 int(marca.weekday()): float(valor)
                 for marca, valor in zip(ultimos_7["ds"], ultimos_7["weekly"])
             }
-            componentes.perfil_semanal = [
-                efecto_por_dia[d] for d in range(7)
-            ]  # lun..dom
+            componentes.perfil_semanal = [efecto_por_dia[d] for d in range(7)]  # lun..dom
         if "yearly" in completo.columns:
             ventana_anual = completo.tail(365)
             efecto_por_fecha = {
@@ -125,9 +121,7 @@ class AdaptadorProphet(PuertoModeloPronostico):
                 for marca, valor in zip(ventana_anual["ds"], ventana_anual["yearly"])
             }
             componentes.perfil_anual_dias = sorted(efecto_por_fecha)
-            componentes.perfil_anual = [
-                efecto_por_fecha[d] for d in componentes.perfil_anual_dias
-            ]
+            componentes.perfil_anual = [efecto_por_fecha[d] for d in componentes.perfil_anual_dias]
         if "holidays" in completo.columns:
             componentes.feriados = [float(v) for v in completo["holidays"]]
         return componentes

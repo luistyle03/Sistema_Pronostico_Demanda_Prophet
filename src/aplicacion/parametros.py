@@ -28,9 +28,7 @@ class ParametrosPronostico:
 
     def descripcion(self) -> List[tuple]:
         """Pares (etiqueta, valor) para la hoja 'Parámetros' del Excel: trazabilidad."""
-        feriados = "; ".join(
-            f"{f.isoformat()} {n}" for f, n in self.feriados_personalizados
-        )
+        feriados = "; ".join(f"{f.isoformat()} {n}" for f, n in self.feriados_personalizados)
         return [
             ("Horizonte (días)", self.horizonte),
             ("Estacionalidad anual", "Sí" if self.estacionalidad_anual else "No"),
