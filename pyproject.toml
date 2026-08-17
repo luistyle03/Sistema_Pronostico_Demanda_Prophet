@@ -29,6 +29,9 @@ target-version = "py314"
 [tool.ruff.lint]
 select = ["E", "F", "I"]   # errores de estilo (E), pyflakes (F), orden de imports (I)
 
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
+
 [tool.pytest.ini_options]
 testpaths = ["pruebas"]
 
