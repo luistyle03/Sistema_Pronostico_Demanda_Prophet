@@ -1,14 +1,10 @@
 name: tests
+
 on:
   push:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-
-env:
-  # Version de Ruff fijada: garantiza que CI y la maquina de desarrollo
-  # evaluen con el MISMO analizador. Cambiar solo de forma deliberada.
-  RUFF_VERSION: "0.16.3"
 
 jobs:
   test:
@@ -21,20 +17,41 @@ jobs:
         with:
           enable-cache: true
 
+      # --locked aborta si uv.lock no corresponde a pyproject.toml, en lugar
+      # de reescribirlo en silencio. Garantiza que el entorno del runner sea
+      # identico al declarado: mismo Python y mismas dependencias con hash.
       - name: Reconstruir el entorno desde uv.lock
-        run: uv sync
+        run: uv sync --locked
+
+      # Constancia de trazabilidad: queda fechada en el registro del job.
+      - name: Dejar constancia del entorno
+        run: uv run python entorno.py
+
+      # Inventario completo, incluidas las dependencias transitivas.
+      - name: Inventario de dependencias instaladas
+        run: uv pip list
 
       # Guarda estatica: detecta modulos importados que no fueron versionados,
-      # tolerando los que estan planificados para sprints posteriores.
+      # tolerando los planificados para sprints posteriores.
       - name: Verificar integridad de imports
         run: uv run python verificar_integridad.py
 
-      - name: Ejecutar la bateria de pruebas
+      - name: Ejecutar la bateria de 32 pruebas
         run: uv run python -m pytest pruebas -v
 
-      - name: Ver version de Ruff
-        run: uv run --with "ruff==${RUFF_VERSION}" ruff --version
-
       - name: Revisar el estilo PEP 8
-        run: uv run --with "ruff==${RUFF_VERSION}" ruff check src pruebas herramientas verificar_integridad.py
-      
+        run: uv run ruff check src pruebas herramientas entorno.py verificar_integridad.py
+
+      # Artefacto descargable con el detalle exacto del entorno de la corrida.
+      - name: Generar constancia descargable
+        if: always()
+        run: |
+          uv run python entorno.py > constancia_entorno.txt
+          uv pip list >> constancia_entorno.txt
+
+      - name: Publicar constancia
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: constancia-entorno
+          path: constancia_entorno.txt
