@@ -195,5 +195,4 @@ def main() -> None:
     ejecutar(main_args.entrada, main_args.fraccion_prueba, main_args.salida)
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main    main()
