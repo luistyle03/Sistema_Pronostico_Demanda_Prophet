@@ -35,6 +35,14 @@ select = ["E", "F", "I"]   # errores de estilo (E), pyflakes (F), orden de impor
 # la maquina de desarrollo y el runner de integracion continua.
 known-first-party = ["src"]
 
+[tool.ruff.lint.per-file-ignores]
+# Los scripts de herramientas y las pruebas insertan la raíz del proyecto en
+# sys.path ANTES de importar de src/, por lo que E402 no aplica: el orden es
+# deliberado y necesario para que el script funcione fuera del paquete.
+"herramientas/*.py" = ["E402"]
+"pruebas/conftest.py" = ["E402"]
+"pruebas/prueba_rapida.py" = ["E402"]
+
 [tool.pytest.ini_options]
 testpaths = ["pruebas"]
 
