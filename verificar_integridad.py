@@ -20,7 +20,7 @@ RAIZ = pathlib.Path(__file__).resolve().parent
 # a medida que se creen; el script avisa si alguno ya existe.
 PENDIENTES: dict[str, str] = {
     #"src.aplicacion.casos_uso.evaluar_modelos": "S13",
-    # "src.infraestructura.estadistica.adaptador_scipy": "S13",
+    #"src.infraestructura.estadistica.adaptador_scipy": "S13",
     "src.infraestructura.persistencia.exportador_excel": "S13",
     "src.infraestructura.persistencia.lector_archivos": "S13",
 }
