@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio{% endblock %}
+{% block contenido %}
+<section class="portada">
+  <p class="sobretitulo">Tesis · Universidad Tecnológica del Perú</p>
+  <h1>Pronóstico de demanda para la micro y pequeña empresa</h1>
+  <p class="bajada">
+    Dos módulos, un mismo núcleo: primero el <strong>experimento</strong> que compara
+    Prophet contra cuatro modelos clásicos en igualdad de condiciones; luego la
+    <strong>herramienta</strong> con la que un negocio real pronostica sus ventas.
+  </p>
+</section>
+
+<section class="tarjetas-modulos">
+  <a class="tarjeta-modulo" href="/experimental">
+    <span class="numero-modulo">1</span>
+    <h2>Módulo experimental</h2>
+    <p>
+      Cargue una o varias series históricas y haga competir a
+      <em>Prophet, ARIMA, Holt-Winters, promedio móvil y regresión lineal</em>.
+      El sistema mide MAPE, RMSE, RMSSE y tiempo, aplica las pruebas estadísticas
+      del plan de tesis y declara al ganador <strong>calculado de los datos</strong>.
+    </p>
+    <span class="accion">Abrir experimento →</span>
+  </a>
+
+  <a class="tarjeta-modulo" href="/pronostico">
+    <span class="numero-modulo">2</span>
+    <h2>Módulo de pronóstico retail</h2>
+    <p>
+      Suba el Excel de ventas de su negocio (fecha, producto, unidades),
+      configure estacionalidades y feriados, y obtenga un pronóstico con
+      intervalo de confianza, indicadores de negocio y descarga en Excel
+      con huella SHA-256.
+    </p>
+    <span class="accion">Abrir pronóstico →</span>
+  </a>
+</section>
+{% endblock %}
