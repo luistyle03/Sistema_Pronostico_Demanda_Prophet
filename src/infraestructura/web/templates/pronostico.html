@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block titulo %}Módulo 2 · Pronóstico retail{% endblock %}
+{% block nav_pro %}activo{% endblock %}
+{% block contenido %}
+<h1>Módulo 2 · Pronóstico de ventas para su negocio</h1>
+<p class="bajada">
+  Suba su historial de ventas, configure el modelo y obtenga la proyección con su
+  banda de confianza, lista para descargar en Excel.
+</p>
+
+<section class="panel">
+  <h2><span class="paso">1</span> Cargue su Excel de ventas</h2>
+  <p class="ayuda">
+    Columnas esperadas: <code>fecha</code>, <code>nombre de producto</code> (opcional) y
+    <code>unidades vendidas</code>. Las filas repetidas de un mismo día se suman y los
+    días sin registro se consideran ventas en cero.
+  </p>
+  <div class="fila-controles">
+    <input type="file" id="archivo" accept=".xlsx,.xlsm,.xls,.csv">
+    <button id="boton-cargar" class="boton-principal">Cargar archivo</button>
+  </div>
+  <p id="estado-carga" class="estado oculto"></p>
+</section>
+
+<section class="panel oculto" id="panel-parametros">
+  <h2><span class="paso">2</span> Configure el pronóstico</h2>
+  <div class="rejilla-parametros">
+    <label class="campo">
+      Producto
+      <select id="producto"></select>
+    </label>
+    <label class="campo">
+      Días a pronosticar
+      <input type="number" id="horizonte" min="1" max="365" value="28">
+    </label>
+    <label class="campo">
+      Intervalo de confianza
+      <select id="intervalo">
+        <option value="0.80" selected>80 % (recomendado)</option>
+        <option value="0.90">90 %</option>
+        <option value="0.95">95 %</option>
+      </select>
+    </label>
+    <label class="campo">
+      Flexibilidad de la tendencia
+      <select id="flexibilidad">
+        <option value="0.01">Baja (tendencia rígida)</option>
+        <option value="0.05" selected>Media (valor por defecto)</option>
+        <option value="0.20">Alta (tendencia muy adaptable)</option>
+      </select>
+    </label>
+  </div>
+
+  <h3>Estacionalidades</h3>
+  <p class="ayuda">Patrones que se repiten en el tiempo y que el modelo debe aprender.</p>
+  <div class="fila-controles">
+    <label class="casilla"><input type="checkbox" id="est-semanal" checked> Semanal (cada 7 días)</label>
+    <label class="casilla"><input type="checkbox" id="est-anual" checked> Anual (cada 12 meses)</label>
+    <label class="casilla"><input type="checkbox" id="est-mensual"> Mensual (cada ~30 días)</label>
+  </div>
+
+  <h3>Feriados</h3>
+  <div class="fila-controles">
+    <label class="campo">
+      Calendario oficial de país
+      <select id="pais">
+        <option value="">Sin feriados de país</option>
+        <option value="PE" selected>Perú</option>
+        <option value="EC">Ecuador</option>
+      </select>
+    </label>
+  </div>
+  <p class="ayuda">
+    Feriados propios del negocio (aniversario, campaña, etc.): se tratan como días
+    de comportamiento especial.
+  </p>
+  <div class="fila-controles">
+    <input type="date" id="feriado-fecha">
+    <input type="text" id="feriado-nombre" placeholder="Nombre del feriado" maxlength="60">
+    <button id="boton-feriado" class="boton-secundario" type="button">Agregar feriado</button>
+  </div>
+  <ul id="lista-feriados" class="lista-feriados"></ul>
+
+  <div class="fila-controles">
+    <button id="boton-generar" class="boton-principal">Generar pronóstico</button>
+  </div>
+  <p id="estado-generar" class="estado oculto"></p>
+</section>
+
+<div id="resultados" class="oculto">
+  <section class="panel">
+    <h2><span class="paso">3</span> Resumen para la toma de decisiones</h2>
+    <div class="rejilla-kpi">
+      <div class="kpi"><span class="kpi-etiqueta">Total proyectado</span><span class="kpi-valor" id="kpi-total"></span></div>
+      <div class="kpi"><span class="kpi-etiqueta">Variación vs período anterior</span><span class="kpi-valor" id="kpi-variacion"></span></div>
+      <div class="kpi"><span class="kpi-etiqueta">Día pico proyectado</span><span class="kpi-valor" id="kpi-pico"></span></div>
+      <div class="kpi"><span class="kpi-etiqueta">Promedio diario</span><span class="kpi-valor" id="kpi-promedio"></span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2><span class="paso">4</span> Gráfico: historia y pronóstico</h2>
+    <div id="grafico-pronostico" class="grafico"></div>
+  </section>
+
+  <section class="panel" id="seccion-componentes">
+    <h2><span class="paso">5</span> ¿Por qué ese número? Descomposición del pronóstico</h2>
+    <p class="ayuda">
+      Prophet es un modelo aditivo: <strong>pronóstico = tendencia + estacionalidades +
+      feriados</strong>. Cada pieza se muestra por separado para que pueda validar el
+      razonamiento del modelo con su experiencia del negocio.
+    </p>
+    <div id="grafico-componentes" class="grafico"></div>
+    <p id="nota-componentes" class="ayuda oculto"></p>
+  </section>
+
+  <section class="panel">
+    <h2><span class="paso">6</span> Detalle diario y descarga</h2>
+    <div class="tabla-envoltura tabla-alta"><table id="tabla-pronostico"></table></div>
+    <div class="fila-controles">
+      <a id="descargar-excel" class="boton-principal" href="#">Descargar pronóstico (.xlsx)</a>
+    </div>
+    <p class="ayuda">Huella SHA-256 del archivo (integridad): <code id="hash-excel"></code></p>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='plotly.min.js') }}"></script>
+<script src="{{ url_for('static', filename='pronostico.js') }}"></script>
+{% endblock %}
