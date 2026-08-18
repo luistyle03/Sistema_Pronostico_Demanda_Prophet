@@ -40,7 +40,7 @@ EXCLUIDAS = {".venv", "venv", "build", "dist", "__pycache__", ".git"}
 PENDIENTES: dict[str, str] = {
     #"src.infraestructura.persistencia": "S14",
     #"src.infraestructura.persistencia.lector_archivos": "S14",
-    "src.infraestructura.persistencia.exportador_excel": "S15",
+    #"src.infraestructura.persistencia.exportador_excel": "S15",
     "src.infraestructura.web": "S15",
     "src.infraestructura.web.servidor": "S15",
 }
