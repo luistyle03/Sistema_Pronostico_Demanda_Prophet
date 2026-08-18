@@ -1,11 +1,4 @@
-"""[S14 · Iteración 5] Lector de ventas: validación, limpieza y series continuas.
-
-Alcance de esta iteración: el lector que convierte el Excel/CSV del comerciante
-en series limpias y continuas, con errores en idioma humano.
-
-La capa web se construye en S15, cuando ya existe el exportador del que depende
-`servidor.py`. Las comprobaciones de las pantallas se incorporan en esa semana.
-"""
+"""[S14 · Iteración 5] Lector de ventas (validación) y pantallas Flask."""
 
 import io
 from datetime import date, timedelta
@@ -13,8 +6,13 @@ from datetime import date, timedelta
 import pytest
 from openpyxl import Workbook
 
+from src.aplicacion.casos_uso.evaluar_modelos import EvaluadorDeModelos
+from src.aplicacion.casos_uso.generar_pronostico import GeneradorDePronostico
 from src.dominio.excepciones import ColumnasFaltantesError, DatosInvalidosError
+from src.infraestructura.modelos.adaptador_media_movil import AdaptadorMediaMovil
+from src.infraestructura.persistencia.exportador_excel import ExportadorExcel
 from src.infraestructura.persistencia.lector_archivos import LectorVentas
+from src.infraestructura.web.servidor import crear_app
 
 
 def xlsx_bytes(filas, encabezados=("Fecha", "Producto", "Unidades Vendidas")):
@@ -64,3 +62,20 @@ def test_lector_reporta_errores_en_lenguaje_del_usuario():
         lector.leer(xlsx_bytes([("no-es-fecha", "A", 1)]), "v.xlsx")
     with pytest.raises(DatosInvalidosError):
         lector.leer(b"cualquier cosa", "notas.txt")
+
+
+def app_de_prueba():
+    """Cableado con promedio móvil: rápido y demuestra la inyección por puerto."""
+    return crear_app(
+        evaluador=EvaluadorDeModelos([AdaptadorMediaMovil()]),
+        generador=GeneradorDePronostico(),
+        fabrica_modelo=lambda parametros: AdaptadorMediaMovil(),
+        lector=LectorVentas(),
+        exportador=ExportadorExcel(),
+    )
+
+
+def test_pantallas_responden():
+    cliente = app_de_prueba().test_client()
+    for ruta in ("/", "/pronostico", "/experimental"):
+        assert cliente.get(ruta).status_code == 200
