@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block titulo %}Módulo 1 · Experimento{% endblock %}
+{% block nav_exp %}activo{% endblock %}
+{% block contenido %}
+<h1>Módulo 1 · Evaluación comparativa de modelos</h1>
+<p class="bajada">
+  Los cinco modelos compiten sobre los mismos datos con validación
+  <em>holdout temporal</em>: el tramo final de cada serie se oculta, cada modelo lo
+  pronostica y se mide cuánto se equivocó. Métrica principal:
+  <strong>RMSSE</strong> (libre de escala, comparable entre productos de distinto
+  volumen; un valor &lt; 1 significa que el modelo supera al método ingenuo).
+  Se reportan además WAPE, MAE, sesgo y MAPE como métricas de apoyo.
+</p>
+
+<section class="panel">
+  <h2><span class="paso">1</span> Cargue el archivo de series históricas</h2>
+  <p class="ayuda">
+    Acepta <code>.xlsx</code> o <code>.csv</code> con columnas
+    <code>fecha</code> y <code>unidades vendidas</code> (una serie única), y
+    opcionalmente <code>producto/serie</code> (modo lote: una evaluación por serie,
+    como las 50 series Favorita de la tesis).
+  </p>
+  <div class="fila-controles">
+    <input type="file" id="archivo" accept=".xlsx,.xlsm,.xls,.csv">
+    <label class="campo">
+      Porción de prueba (holdout)
+      <select id="fraccion">
+        <option value="0.10">10 % final</option>
+        <option value="0.20" selected>20 % final (plan de tesis)</option>
+        <option value="0.30">30 % final</option>
+      </select>
+    </label>
+    <button id="boton-evaluar" class="boton-principal">Ejecutar evaluación</button>
+  </div>
+  <p id="estado" class="estado oculto"></p>
+</section>
+
+<div id="resultados" class="oculto">
+  <section class="panel veredicto" id="panel-veredicto">
+    <p class="sobretitulo">Veredicto del experimento</p>
+    <h2 id="texto-ganador"></h2>
+    <p id="texto-ganador-detalle"></p>
+    <p class="nota-integridad">Ganador calculado a partir de los datos — no predefinido.</p>
+  </section>
+
+  <section class="panel">
+    <h2><span class="paso">2</span> Tabla comparativa de métricas</h2>
+    <div class="tabla-envoltura"><table id="tabla-metricas"></table></div>
+    <p class="ayuda" id="nota-omitidas"></p>
+  </section>
+
+  <section class="panel">
+    <h2><span class="paso">3</span> Gráficos del experimento</h2>
+    <div id="grafico-principal" class="grafico"></div>
+    <div id="grafico-secundario" class="grafico"></div>
+  </section>
+
+  <section class="panel" id="panel-pruebas">
+    <h2><span class="paso">4</span> Pruebas estadísticas (Prophet frente a cada clásico)</h2>
+    <p class="ayuda">
+      Pruebas pareadas serie a serie: t de Student, Wilcoxon y tamaño del efecto
+      <em>d</em> de Cohen (umbrales de Cohen, 1988).
+    </p>
+    <div class="tabla-envoltura"><table id="tabla-pruebas"></table></div>
+  </section>
+
+  <section class="panel">
+    <h2><span class="paso">5</span> Evidencia para los anexos</h2>
+    <p class="ayuda">Excel con todas las métricas por serie y las pruebas estadísticas.</p>
+    <a id="descargar-evidencia" class="boton-secundario" href="#">Descargar evidencia (.xlsx)</a>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='plotly.min.js') }}"></script>
+<script src="{{ url_for('static', filename='experimental.js') }}"></script>
+{% endblock %}
