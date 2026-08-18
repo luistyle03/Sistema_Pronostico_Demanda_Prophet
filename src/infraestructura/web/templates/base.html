@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block titulo %}SPD{% endblock %} · Sistema de Pronóstico de Demanda</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+</head>
+<body>
+  <header class="cabecera">
+    <a class="marca" href="/">
+      <span class="marca-sigla">SPD</span>
+      <span class="marca-nombre">Sistema de Pronóstico de Demanda</span>
+    </a>
+    <nav class="navegacion">
+      <a href="/experimental" class="{% block nav_exp %}{% endblock %}">Módulo 1 · Experimento</a>
+      <a href="/pronostico" class="{% block nav_pro %}{% endblock %}">Módulo 2 · Pronóstico retail</a>
+    </nav>
+  </header>
+
+  <main class="contenido">
+    {% block contenido %}{% endblock %}
+  </main>
+
+  <footer class="pie">
+    Tesis UTP · Comparación de Prophet frente a modelos clásicos de series temporales ·
+    El ganador siempre se <strong>calcula a partir de los datos</strong>, nunca está predefinido.
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>
