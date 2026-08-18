@@ -7,12 +7,15 @@ import pytest
 from src.dominio.entidades import PuntoSerie, SerieTemporal
 from src.dominio.excepciones import ModeloNoEntrenadoError
 from src.infraestructura.modelos.adaptador_arima import AdaptadorARIMA
-from src.infraestructura.modelos.adaptador_regresion_lineal import AdaptadorRegresionLineal
+from src.infraestructura.modelos.adaptador_regresion_lineal import (
+    AdaptadorRegresionLineal,
+)
 
 
 def serie(valores, inicio=date(2026, 1, 1)):
     return SerieTemporal(
-        "s", [PuntoSerie(inicio + timedelta(days=i), float(v)) for i, v in enumerate(valores)]
+        "s",
+        [PuntoSerie(inicio + timedelta(days=i), float(v)) for i, v in enumerate(valores)],
     )
 
 
