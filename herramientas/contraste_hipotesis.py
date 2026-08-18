@@ -37,7 +37,6 @@ from src.infraestructura.modelos.adaptador_prophet import AdaptadorProphet
 from src.infraestructura.modelos.adaptador_regresion_lineal import (
     AdaptadorRegresionLineal,
 )
-from src.infraestructura.persistencia.lector_archivos import LectorVentas
 
 ALFA = 0.05
 
@@ -97,6 +96,14 @@ def _modelos_del_experimento():
 
 
 def ejecutar(entrada: Path, fraccion_prueba: float, salida: Path) -> None:
+    # El lector se importa AQUÍ y no en la cabecera del módulo a propósito: las
+    # funciones de contraste (ajuste_holm, contraste_he1) son estadística pura y
+    # no dependen de la lectura de archivos. Importarlo arriba obligaría a que la
+    # capa de persistencia exista para poder siquiera importar este módulo, y las
+    # pruebas del instrumento de medición (S13) se escribieron antes que esa capa
+    # (S14). La importación diferida mantiene el módulo utilizable en ambos casos.
+    from src.infraestructura.persistencia.lector_archivos import LectorVentas
+
     # Se usa EXACTAMENTE el mismo lector que la aplicación web: normaliza los
     # nombres de columna, interpreta las fechas dd/mm/aaaa, suma duplicados,
     # rellena los días sin registro con 0 y descarta valores negativos.
@@ -197,4 +204,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

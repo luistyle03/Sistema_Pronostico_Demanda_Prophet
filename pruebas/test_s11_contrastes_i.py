@@ -12,7 +12,8 @@ from src.infraestructura.modelos.adaptador_media_movil import AdaptadorMediaMovi
 
 def serie(valores, inicio=date(2026, 1, 1)):
     return SerieTemporal(
-        "s", [PuntoSerie(inicio + timedelta(days=i), float(v)) for i, v in enumerate(valores)]
+        "s",
+        [PuntoSerie(inicio + timedelta(days=i), float(v)) for i, v in enumerate(valores)],
     )
 
 

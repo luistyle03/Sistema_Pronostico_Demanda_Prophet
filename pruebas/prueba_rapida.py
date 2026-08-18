@@ -23,7 +23,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from openpyxl import Workbook
 
-from entorno import imprimir_entorno
 from src.aplicacion.casos_uso.evaluar_modelos import EvaluadorDeModelos
 from src.aplicacion.casos_uso.generar_pronostico import GeneradorDePronostico
 from src.aplicacion.parametros import ParametrosPronostico
@@ -139,7 +138,6 @@ def probar_lector(lector: LectorVentas) -> None:
 
 
 if __name__ == "__main__":
-    imprimir_entorno("ENTORNO DE LA PRUEBA RAPIDA")
     modelos = [
         AdaptadorProphet(ParametrosPronostico()),
         AdaptadorARIMA(),
