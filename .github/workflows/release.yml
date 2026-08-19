@@ -12,11 +12,21 @@ jobs:
 
       - name: Instalar uv
         uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.11.7"
 
       # El grupo "empaquetado" contiene PyInstaller, fijado en uv.lock igual que
       # el resto. No se instala en el flujo de pruebas —alli no hace falta— pero
       # aqui se pide de forma explicita. Asi el ejecutable de hoy y el de dentro
       # de un año se construyen con el MISMO empaquetador.
+      # uv lock --check falla con un mensaje mas explicito que el de --locked
+      # cuando pyproject.toml y uv.lock se desincronizan (tipicamente porque se
+      # edito el pyproject y no se volvio a commitear el lock regenerado).
+      - name: Comprobar que uv.lock corresponde al pyproject.toml
+        run: |
+          uv --version
+          uv lock --check
+
       - name: Reproducir el entorno desde uv.lock
         run: uv sync --locked --group empaquetado
 
