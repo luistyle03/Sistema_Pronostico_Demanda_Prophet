@@ -15,6 +15,7 @@ from __future__ import annotations
 import threading
 import webbrowser
 
+from entorno import imprimir_entorno
 from src.aplicacion.casos_uso.evaluar_modelos import EvaluadorDeModelos
 from src.aplicacion.casos_uso.generar_pronostico import GeneradorDePronostico
 from src.aplicacion.parametros import ParametrosPronostico
@@ -70,6 +71,7 @@ def abrir_navegador() -> None:
 
 
 if __name__ == "__main__":
+    imprimir_entorno("SPD - ENTORNO DE EJECUCION")
     app = construir_aplicacion()
     # Se programa la apertura del navegador 1.2 s después de arrancar, para
     # dar tiempo a que el servidor esté escuchando.
