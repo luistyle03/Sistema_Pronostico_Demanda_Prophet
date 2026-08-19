@@ -1,0 +1,34 @@
+name: release
+
+on:
+  push:
+    tags: [ "v*" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@v5
+
+      # El grupo "empaquetado" contiene PyInstaller, fijado en uv.lock igual que
+      # el resto. No se instala en el flujo de pruebas —alli no hace falta— pero
+      # aqui se pide de forma explicita. Asi el ejecutable de hoy y el de dentro
+      # de un año se construyen con el MISMO empaquetador.
+      - name: Reproducir el entorno desde uv.lock
+        run: uv sync --locked --group empaquetado
+
+      - name: Dejar constancia del entorno
+        run: |
+          uv run python entorno.py
+          uv run pyinstaller --version
+
+      - name: Empaquetar el ejecutable
+        run: uv run pyinstaller empaquetado/SPD.spec
+
+      - name: Publicar en el release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
