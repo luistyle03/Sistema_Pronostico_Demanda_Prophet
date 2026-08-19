@@ -13,7 +13,7 @@ jobs:
       - name: Instalar uv
         uses: astral-sh/setup-uv@v5
         with:
-          version: "0.11.7"
+          version: "0.12.5"
 
       # El grupo "empaquetado" contiene PyInstaller, fijado en uv.lock igual que
       # el resto. No se instala en el flujo de pruebas —alli no hace falta— pero

@@ -18,7 +18,7 @@ jobs:
       - name: Instalar uv
         uses: astral-sh/setup-uv@v5
         with:
-          version: "0.11.7"
+          version: "0.12.5"
           enable-cache: true
 
       # --locked aborta si uv.lock no corresponde a pyproject.toml, en lugar de
