@@ -1,8 +1,18 @@
 name: release
 
+# Este flujo NO se dispara al hacer push a main: solo cuando se publica una
+# ETIQUETA que empiece con "v" (v1.0.0, v1.1.0, ...). Esa etiqueta es la orden
+# de "publicar una version". Mientras no exista una, no hay release ni
+# ejecutable, por diseño.
 on:
   push:
     tags: [ "v*" ]
+
+# Sin este permiso el flujo construye el ejecutable pero falla al publicarlo:
+# el token por defecto de GitHub Actions es de solo lectura en repositorios
+# creados recientemente.
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -15,18 +25,17 @@ jobs:
         with:
           version: "0.12.5"
 
-      # El grupo "empaquetado" contiene PyInstaller, fijado en uv.lock igual que
-      # el resto. No se instala en el flujo de pruebas —alli no hace falta— pero
-      # aqui se pide de forma explicita. Asi el ejecutable de hoy y el de dentro
-      # de un año se construyen con el MISMO empaquetador.
-      # uv lock --check falla con un mensaje mas explicito que el de --locked
-      # cuando pyproject.toml y uv.lock se desincronizan (tipicamente porque se
-      # edito el pyproject y no se volvio a commitear el lock regenerado).
+      # Falla con un mensaje mas explicito que el de --locked cuando
+      # pyproject.toml y uv.lock se desincronizan.
       - name: Comprobar que uv.lock corresponde al pyproject.toml
         run: |
           uv --version
           uv lock --check
 
+      # El grupo "empaquetado" contiene PyInstaller, fijado en uv.lock igual que
+      # el resto. No se instala en el flujo de pruebas —alli no hace falta— pero
+      # aqui se pide de forma explicita. Asi el ejecutable de hoy y el de dentro
+      # de un año se construyen con el MISMO empaquetador.
       - name: Reproducir el entorno desde uv.lock
         run: uv sync --locked --group empaquetado
 
@@ -38,7 +47,17 @@ jobs:
       - name: Empaquetar el ejecutable
         run: uv run pyinstaller empaquetado/SPD.spec
 
-      - name: Publicar en el release
+      # PyInstaller genera una CARPETA (dist/SPD con SPD.exe y _internal), no un
+      # archivo suelto. Un release solo admite archivos, asi que se comprime.
+      - name: Comprimir la carpeta distribuible
+        shell: pwsh
+        run: |
+          $nombre = "SPD-${{ github.ref_name }}-windows-x64.zip"
+          Compress-Archive -Path dist/SPD -DestinationPath $nombre
+          Get-Item $nombre | Format-List Name, Length
+
+      - name: Publicar el release con el ejecutable adjunto
         uses: softprops/action-gh-release@v2
         with:
-          files: dist/*
+          files: SPD-${{ github.ref_name }}-windows-x64.zip
+          generate_release_notes: true
