@@ -2,23 +2,35 @@
 name = "spd-tesis"
 version = "0.1.0"
 description = "Sistema de Pronóstico de Demanda (SPD) basado en el algoritmo Prophet"
-readme = "README.md"
+readme = "LEEME.md"
+
+# Rango CERRADO del intérprete. El límite superior no es decorativo: sin él,
+# el resolutor debe elegir versiones compatibles también con 3.15, 3.16 y
+# posteriores, y uv aceptaría arrancar el proyecto con un intérprete futuro
+# que nunca fue validado. El archivo .python-version fija el número exacto
+# (3.14.6); requires-python define qué es admisible y sí se verifica.
 requires-python = ">=3.14,<3.15"
+
+# Versiones EXACTAS (==) y no mínimas (>=). Los resultados estadísticos de la
+# tesis se obtuvieron con estas versiones concretas; una actualización de
+# prophet o statsmodels podría alterar los valores de las métricas y del
+# tamaño del efecto. Subir cualquiera de ellas debe ser un acto deliberado,
+# seguido de reejecutar la batería de pruebas.
 dependencies = [
-    "flask>=3.1.3",
-    "holidays>=0.102",
-    "numpy>=2.5.1",
-    "openpyxl>=3.1.5",
-    "pandas>=3.0.5",
-    "prophet>=1.3.0",
-    "scikit-learn>=1.9.0",
-    "scipy>=1.18.0",
-    "statsmodels>=0.14.6",
-    "tabulate>=0.10.0",
+    "flask==3.1.3",
+    "holidays==0.102",
+    "numpy==2.5.1",
+    "openpyxl==3.1.5",
+    "pandas==3.0.5",
+    "prophet==1.3.0",
+    "scikit-learn==1.9.0",
+    "scipy==1.18.0",
+    "statsmodels==0.14.6",
 ]
 
 # Configuración de estilo y análisis estático (estándar PEP 8)
 [tool.black]
+# PEP 8 admite ampliar el límite hasta 99 columnas cuando el equipo lo acuerda.
 line-length = 100
 target-version = ["py314"]
 
@@ -30,10 +42,12 @@ target-version = "py314"
 select = ["E", "F", "I"]   # errores de estilo (E), pyflakes (F), orden de imports (I)
 
 [tool.ruff.lint.isort]
-# Clasificacion determinista: todo lo que empiece con "src" es codigo propio,
-# exista o no el archivo en disco. Evita que el orden exigido cambie entre
-# la maquina de desarrollo y el runner de integracion continua.
-known-first-party = ["src"]
+# Clasificación DETERMINISTA de los imports propios. Sin esta línea, Ruff
+# deduce si "src.x" es código propio o librería externa según los archivos
+# presentes en disco; el orden exigido cambiaría entre la máquina de
+# desarrollo y el runner de integración continua, provocando fallos de
+# I001 que no se reproducen localmente.
+known-first-party = ["src", "entorno"]
 
 [tool.ruff.lint.per-file-ignores]
 # Los scripts de herramientas y las pruebas insertan la raíz del proyecto en
@@ -47,8 +61,21 @@ known-first-party = ["src"]
 testpaths = ["pruebas"]
 
 [dependency-groups]
+# Las herramientas de desarrollo también se fijan y viajan en uv.lock, para
+# que el análisis estático de la máquina local y el de integración continua
+# sean el MISMO programa. Invocarlas con `uv run --with ruff` las dejaría
+# fuera del bloqueo y permitiría que CI usara una versión distinta.
 dev = [
-    "pytest>=9.1.1",
-    "pytest-cov>=7.1.0",
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
     "ruff==0.16.3",
+    "black==25.9.0",
+]
+
+# Grupo separado: PyInstaller solo hace falta al construir el ejecutable, no
+# para ejecutar ni para probar. Queda fijado en uv.lock como todo lo demas,
+# pero NO se instala con `uv sync` normal; se pide explicitamente con
+# `uv sync --locked --group empaquetado` en el flujo de publicacion.
+empaquetado = [
+    "pyinstaller==6.22.1",
 ]
