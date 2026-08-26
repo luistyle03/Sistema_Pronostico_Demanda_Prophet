@@ -57,9 +57,16 @@ CORTES_POR_DEFECTO = [0.30, 0.20, 0.10]
 
 
 def _construir_evaluador() -> EvaluadorDeModelos:
-    """Mismo cableado que el experimento principal: sin ventaja para nadie."""
+    """Cableado IDENTICO al del experimento principal (evaluar_modelos_cli.py).
+
+    Prophet recibe el calendario nacional de Ecuador, que es de donde procede el
+    dataset Corporacion Favorita. Omitirlo desactivaria la capacidad nativa de
+    manejo de feriados que el diseno del estudio declara como parte del
+    tratamiento, y las corridas de estabilidad no serian comparables con la
+    corrida principal.
+    """
     modelos = [
-        AdaptadorProphet(ParametrosPronostico()),
+        AdaptadorProphet(ParametrosPronostico(pais_feriados="EC")),
         AdaptadorARIMA(),
         AdaptadorHoltWinters(),
         AdaptadorMediaMovil(),
