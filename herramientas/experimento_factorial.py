@@ -56,6 +56,143 @@ from src.infraestructura.persistencia.lector_archivos import LectorVentas
 CORTES_POR_DEFECTO = [0.30, 0.20, 0.10]
 
 
+
+UMBRAL_ALFA = 0.05
+UMBRAL_D = 0.20
+
+
+def leer_rangos(valor: float, tipo: str) -> str:
+    """Traduce un estadistico a la categoria que le corresponde en la literatura."""
+    if tipo == "p":
+        if valor < 0.01:
+            return "p < 0,01 (diferencia muy marcada)"
+        if valor < UMBRAL_ALFA:
+            return f"p < {UMBRAL_ALFA} (diferencia significativa)"
+        if valor < 0.10:
+            return "0,05 ≤ p < 0,10 (sin significación; zona limítrofe)"
+        return "p ≥ 0,10 (sin diferencia distinguible del azar)"
+    if abs(valor) < UMBRAL_D:
+        return "|d| < 0,20 (efecto despreciable)"
+    if abs(valor) < 0.50:
+        return "0,20 ≤ |d| < 0,50 (efecto pequeño)"
+    if abs(valor) < 0.80:
+        return "0,50 ≤ |d| < 0,80 (efecto mediano)"
+    return "|d| ≥ 0,80 (efecto grande)"
+
+
+def tabla_veredictos(contrastes: pd.DataFrame, detalle: pd.DataFrame) -> pd.DataFrame:
+    """Un veredicto por comparacion, con la lectura de cada estadistico.
+
+    Distingue las dos condiciones de la regla declarada a priori, porque no son
+    lo mismo y el jurado preguntara por ambas: la ausencia de significacion
+    responde «¿la diferencia es distinguible del azar?», y el tamano del efecto
+    responde «¿es lo bastante grande como para importar?».
+    """
+    piv = detalle.pivot_table(
+        index=["Muestra", "Corte"], columns="Modelo", values="RMSSE mediano"
+    )
+    filas = []
+    for comparacion, sub in contrastes.groupby("Comparación"):
+        rival = comparacion.replace("Prophet vs ", "")
+        n = len(sub)
+        sin_signif_t = int((sub["p ajustado (Holm)"] >= UMBRAL_ALFA).sum())
+        sin_signif_w = int((sub["p (Wilcoxon)"] >= UMBRAL_ALFA).sum())
+        d_desprec = int((sub["d de Cohen"].abs() < UMBRAL_D).sum())
+        equivalentes = int((sub["¿Equivalente?"] == "Sí").sum())
+        d_med = float(sub["d de Cohen"].median())
+        p_holm_med = float(sub["p ajustado (Holm)"].median())
+        p_t_med = float(sub["p (t pareada)"].median())
+        p_w_med = float(sub["p (Wilcoxon)"].median())
+
+        if rival in piv.columns:
+            dif = (piv["Prophet"] - piv[rival]).median()
+            direccion = (
+                "Prophet obtiene menor RMSSE"
+                if dif < 0
+                else f"{rival} obtiene menor RMSSE"
+            )
+            direccion += f" (diferencia mediana {abs(dif):.4f})"
+        else:
+            direccion = "no determinada"
+
+        mayoria = 0.80 * n
+        if sin_signif_t >= mayoria and abs(d_med) < UMBRAL_D:
+            veredicto = "EQUIVALENCIA SOSTENIDA"
+            lectura = (
+                "Se cumplen las dos condiciones de la regla a priori en la mayoría de "
+                "configuraciones: no hay diferencia distinguible del azar y el tamaño "
+                "del efecto es despreciable."
+            )
+        elif sin_signif_t >= mayoria:
+            veredicto = "SIN DIFERENCIA SIGNIFICATIVA; EFECTO PEQUEÑO"
+            lectura = (
+                "No se detecta diferencia estadísticamente significativa, pero el "
+                "tamaño del efecto mediano se sitúa en el rango pequeño de Cohen, por "
+                "encima del umbral de irrelevancia fijado. La hipótesis de no "
+                "inferioridad se sostiene; la de equivalencia estricta, no en todas las "
+                "configuraciones."
+            )
+        else:
+            veredicto = "DIFERENCIA SIGNIFICATIVA"
+            lectura = (
+                "La diferencia resulta significativa tras la corrección de Holm en más "
+                "de una quinta parte de las configuraciones. Debe reportarse como "
+                "hallazgo y discutirse."
+            )
+        filas.append(
+            {
+                "Comparación": comparacion,
+                "Hipótesis": {
+                    "Promedio móvil": "HE2",
+                    "Holt-Winters": "HE3",
+                    "Regresión lineal": "HE4",
+                    "ARIMA": "HE5",
+                }.get(rival, "—"),
+                "Configuraciones": n,
+                "Sin significación tras Holm": f"{sin_signif_t} de {n}",
+                "Sin significación (Wilcoxon)": f"{sin_signif_w} de {n}",
+                "Efecto despreciable (|d|<0,20)": f"{d_desprec} de {n}",
+                "Equivalencia (ambas condiciones)": f"{equivalentes} de {n}",
+                "p mediano (t pareada)": round(p_t_med, 4),
+                "Lectura del p (t)": leer_rangos(p_t_med, "p"),
+                "p mediano (Wilcoxon)": round(p_w_med, 4),
+                "Lectura del p (Wilcoxon)": leer_rangos(p_w_med, "p"),
+                "p mediano tras Holm": round(p_holm_med, 4),
+                "Lectura del p ajustado": leer_rangos(p_holm_med, "p"),
+                "d mediano de Cohen": round(d_med, 4),
+                "Lectura del tamaño del efecto": leer_rangos(d_med, "d"),
+                "Dirección": direccion,
+                "VEREDICTO": veredicto,
+                "Fundamento del veredicto": lectura,
+            }
+        )
+    orden = {"HE2": 0, "HE3": 1, "HE4": 2, "HE5": 3}
+    return pd.DataFrame(filas).sort_values(
+        "Hipótesis", key=lambda c: c.map(orden)
+    ).reset_index(drop=True)
+
+
+def imprimir_veredictos(tabla: pd.DataFrame) -> None:
+    print("\n" + "=" * 78)
+    print("VEREDICTO POR HIPÓTESIS — Prophet frente a cada modelo clásico")
+    print("=" * 78)
+    for _, f in tabla.iterrows():
+        print(f"\n  {f['Hipótesis']} · {f['Comparación']}")
+        print(f"    Sin significación tras Holm : {f['Sin significación tras Holm']}")
+        print(f"    Efecto despreciable         : {f['Efecto despreciable (|d|<0,20)']}")
+        print(f"    Equivalencia estricta       : {f['Equivalencia (ambas condiciones)']}")
+        print(
+            f"    p mediano (Holm)            : {f['p mediano tras Holm']}"
+            f"  →  {f['Lectura del p ajustado']}"
+        )
+        print(
+            f"    d mediano de Cohen          : {f['d mediano de Cohen']}"
+            f"  →  {f['Lectura del tamaño del efecto']}"
+        )
+        print(f"    Dirección                   : {f['Dirección']}")
+        print(f"    VEREDICTO                   : {f['VEREDICTO']}")
+
+
 def preparar_muestra(
     train: Path, semilla: int, tiendas: int, productos: int, destino: Path
 ) -> Path:
@@ -136,7 +273,26 @@ def main() -> None:
     parser.add_argument("--tiendas", type=int, default=10)
     parser.add_argument("--productos-por-tienda", type=int, default=5)
     parser.add_argument("--salida", type=Path, default=Path("factorial.xlsx"))
+    parser.add_argument(
+        "--desde-excel",
+        type=Path,
+        help="Reconstruye los veredictos a partir de un factorial.xlsx ya generado, "
+        "sin volver a ajustar modelos.",
+    )
     args = parser.parse_args()
+
+    if args.desde_excel:
+        libro = pd.ExcelFile(args.desde_excel)
+        detalle = libro.parse("Detalle por celda")
+        contrastes = libro.parse("Contrastes por celda")
+        veredictos = tabla_veredictos(contrastes, detalle)
+        imprimir_veredictos(veredictos)
+        with pd.ExcelWriter(args.salida) as writer:
+            veredictos.to_excel(writer, sheet_name="Veredicto por hipótesis", index=False)
+            for hoja in libro.sheet_names:
+                libro.parse(hoja).to_excel(writer, sheet_name=hoja[:31], index=False)
+        print(f"\nEvidencia guardada en: {args.salida}")
+        return
 
     if not args.muestras and args.train is None:
         raise SystemExit("Indique la ruta al train.csv o una lista con --muestras.")
@@ -294,12 +450,21 @@ def main() -> None:
             f"\n    Total: {eq_total} de {len(tabla_contrastes)} contrastes "
             f"({eq_total / len(tabla_contrastes):.0%}) cumplen la regla de equivalencia."
         )
+    veredictos = (
+        tabla_veredictos(tabla_contrastes, detalle)
+        if not tabla_contrastes.empty
+        else pd.DataFrame()
+    )
+    if not veredictos.empty:
+        imprimir_veredictos(veredictos)
     print(f"\n  Tiempo total: {(time.time() - inicio_global) / 60:.1f} minutos")
 
     resumen = pd.DataFrame(
         [{"Modelo": m, "Celdas ganadas": int(v), "De": total} for m, v in conteo.items()]
     )
     with pd.ExcelWriter(args.salida) as writer:
+        if not veredictos.empty:
+            veredictos.to_excel(writer, sheet_name="Veredicto por hipótesis", index=False)
         resumen.to_excel(writer, sheet_name="Resumen", index=False)
         pd.DataFrame([{"Veredicto": veredicto}]).to_excel(
             writer, sheet_name="Resumen", index=False, startrow=len(resumen) + 2
