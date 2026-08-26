@@ -49,6 +49,7 @@ sys.path.insert(0, str(RAIZ))
 import pandas as pd
 
 from entorno import imprimir_entorno
+from herramientas.contraste_hipotesis import ajuste_holm
 from herramientas.sensibilidad_origen import _construir_evaluador, etiqueta
 from src.infraestructura.persistencia.lector_archivos import LectorVentas
 
@@ -160,6 +161,7 @@ def main() -> None:
     evaluador = _construir_evaluador()
     total = len(muestras) * len(args.cortes)
     filas = []
+    contrastes = []
     n = 0
     inicio_global = time.time()
 
@@ -173,6 +175,34 @@ def main() -> None:
             with contextlib.redirect_stdout(io.StringIO()):
                 lote = evaluador.ejecutar_lote(series, fraccion_prueba=corte)
             ganador = lote.ganador
+
+            # Contraste pareado de Prophet frente a cada clásico, con la regla
+            # declarada a priori: equivalencia = ausencia de significación tras
+            # Holm Y tamaño de efecto despreciable (|d| < 0,20).
+            pruebas = list(lote.pruebas)
+            p_ajustados = ajuste_holm([pr.p_valor_t for pr in pruebas]) if pruebas else []
+            for pr, p_aj in zip(pruebas, p_ajustados):
+                equivalente = p_aj >= 0.05 and abs(pr.d_cohen) < 0.20
+                contrastes.append(
+                    {
+                        "Muestra": clave,
+                        "Corte": marca,
+                        "Comparación": pr.comparacion,
+                        "p (t pareada)": round(pr.p_valor_t, 4),
+                        "p (Wilcoxon)": round(pr.p_valor_wilcoxon, 4),
+                        "p ajustado (Holm)": round(p_aj, 4),
+                        "d de Cohen": round(pr.d_cohen, 4),
+                        "n": pr.n,
+                        "¿Equivalente?": "Sí" if equivalente else "No",
+                        "Motivo si no": (
+                            ""
+                            if equivalente
+                            else ("significativo tras Holm" if p_aj < 0.05 else "")
+                            + ("; " if p_aj < 0.05 and abs(pr.d_cohen) >= 0.20 else "")
+                            + ("efecto no despreciable" if abs(pr.d_cohen) >= 0.20 else "")
+                        ),
+                    }
+                )
             print(
                 f"ganó {ganador.nombre_modelo} "
                 f"(RMSSE {ganador.rmsse_mediana:.4f}, {time.time() - t0:.0f} s)"
@@ -196,6 +226,7 @@ def main() -> None:
 
     detalle = pd.DataFrame(filas)
     ganadoras = detalle[detalle["Ganó la celda"] == "Sí"]
+    tabla_contrastes = pd.DataFrame(contrastes)
 
     # ------------------------------------------------- 3) lectura de resultados
     print("\n" + "=" * 74)
@@ -238,7 +269,31 @@ def main() -> None:
             "SENSIBLE: el modelo líder cambia según el corte "
             f"({lideres_por_corte}). Debe declararse y discutirse."
         )
-    print(f"  Veredicto: {veredicto}")
+    print(f"  Veredicto sobre el liderazgo: {veredicto}")
+
+    # ------------------------------------------------- 4) equivalencia pareada
+    if not tabla_contrastes.empty:
+        print("\n" + "=" * 74)
+        print("CONTRASTE DE LAS HIPÓTESIS HE2 A HE5 EN CADA CONFIGURACIÓN")
+        print("=" * 74)
+        print("  Regla a priori: equivalencia = p ajustado por Holm ≥ 0,05 Y |d| < 0,20\n")
+        resumen_eq = (
+            tabla_contrastes.groupby("Comparación")["¿Equivalente?"]
+            .apply(lambda c: (c == "Sí").sum())
+            .sort_values(ascending=False)
+        )
+        for comparacion, veces in resumen_eq.items():
+            sub = tabla_contrastes[tabla_contrastes["Comparación"] == comparacion]
+            d_med = sub["d de Cohen"].median()
+            print(
+                f"    {comparacion:34s} equivalente en {veces:2d} de {total} "
+                f"configuraciones  |  d mediano {d_med:+.3f}"
+            )
+        eq_total = (tabla_contrastes["¿Equivalente?"] == "Sí").sum()
+        print(
+            f"\n    Total: {eq_total} de {len(tabla_contrastes)} contrastes "
+            f"({eq_total / len(tabla_contrastes):.0%}) cumplen la regla de equivalencia."
+        )
     print(f"\n  Tiempo total: {(time.time() - inicio_global) / 60:.1f} minutos")
 
     resumen = pd.DataFrame(
@@ -252,6 +307,21 @@ def main() -> None:
         tabla_corte.to_excel(writer, sheet_name="Por corte")
         tabla_muestra.to_excel(writer, sheet_name="Por muestra")
         detalle.to_excel(writer, sheet_name="Detalle por celda", index=False)
+        if not tabla_contrastes.empty:
+            resumen_eq_df = (
+                tabla_contrastes.groupby("Comparación")
+                .agg(
+                    equivalente_en=("¿Equivalente?", lambda c: (c == "Sí").sum()),
+                    de=("¿Equivalente?", "size"),
+                    d_mediano=("d de Cohen", "median"),
+                    p_holm_mediano=("p ajustado (Holm)", "median"),
+                )
+                .reset_index()
+            )
+            resumen_eq_df.to_excel(writer, sheet_name="Equivalencia HE2-HE5", index=False)
+            tabla_contrastes.to_excel(
+                writer, sheet_name="Contrastes por celda", index=False
+            )
     print(f"\nEvidencia guardada en: {args.salida}")
 
 
