@@ -37,6 +37,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import io
+import os
 import subprocess
 import sys
 import time
@@ -58,8 +59,8 @@ def preparar_muestra(
     train: Path, semilla: int, tiendas: int, productos: int, destino: Path
 ) -> Path:
     """Extrae una muestra del train.csv con la semilla indicada, si no existe ya."""
-    if destino.is_file():
-        print(f"  muestra ya preparada: {destino.name}")
+    if destino.is_file() and destino.stat().st_size > 0:
+        print(f"  muestra ya preparada, se reutiliza: {destino.name}")
         return destino
     orden = [
         sys.executable,
@@ -73,13 +74,45 @@ def preparar_muestra(
         "--max-prop-ceros", "0.15",
         "--salida", str(destino),
     ]
+
+    # El proceso hijo escribe caracteres como «≥» y «×» en su informe de avance.
+    # Cuando su salida va a una consola, Windows la maneja sin problema; cuando va
+    # a una tubería —que es lo que ocurre al capturarla desde aquí— Python usa la
+    # codificación regional (cp1252 en Windows en español) y esos caracteres la
+    # hacen fallar. Forzar el modo UTF-8 en el hijo elimina esa dependencia del
+    # idioma del sistema operativo.
+    entorno_hijo = dict(os.environ)
+    entorno_hijo["PYTHONUTF8"] = "1"
+    entorno_hijo["PYTHONIOENCODING"] = "utf-8"
+
+    registro = destino.with_suffix(".log")
     inicio = time.time()
-    resultado = subprocess.run(orden, capture_output=True, text=True)
+    resultado = subprocess.run(
+        orden,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=entorno_hijo,
+    )
+    registro.write_text(
+        (resultado.stdout or "") + (resultado.stderr or ""), encoding="utf-8"
+    )
     if resultado.returncode != 0:
-        print(resultado.stdout[-2000:])
-        print(resultado.stderr[-2000:])
+        print(f"\n  FALLÓ. Últimas líneas (registro completo en {registro.name}):")
+        for linea in (resultado.stdout or "").rstrip().splitlines()[-5:]:
+            print("    " + linea)
+        for linea in (resultado.stderr or "").rstrip().splitlines()[-12:]:
+            print("    " + linea)
         raise SystemExit(f"Fallo al preparar la muestra de la semilla {semilla}.")
-    print(f"  muestra preparada en {time.time() - inicio:.0f} s: {destino.name}")
+    if not destino.is_file() or destino.stat().st_size == 0:
+        raise SystemExit(
+            f"La muestra de la semilla {semilla} quedó vacía. Revise {registro.name}."
+        )
+    print(
+        f"  muestra preparada en {time.time() - inicio:.0f} s: {destino.name} "
+        f"(registro en {registro.name})"
+    )
     return destino
 
 
