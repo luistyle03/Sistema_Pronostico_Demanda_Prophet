@@ -38,9 +38,9 @@ EXCLUIDAS = {".venv", "venv", "build", "dist", "__pycache__", ".git"}
 # llegan. Retirar de esta lista a medida que se creen: el script avisa si
 # alguno ya existe, para que la lista no quede desactualizada.
 PENDIENTES: dict[str, str] = {
-    #"src.infraestructura.persistencia": "S14",
-    #"src.infraestructura.persistencia.lector_archivos": "S14",
-    #"src.infraestructura.persistencia.exportador_excel": "S15",
+    # "src.infraestructura.persistencia": "S14",
+    # "src.infraestructura.persistencia.lector_archivos": "S14",
+    # "src.infraestructura.persistencia.exportador_excel": "S15",
     # "src.infraestructura.web": "S15",
     # "src.infraestructura.web.servidor": "S15",
 }

@@ -10,6 +10,7 @@ abstracciones (puertos). Para ejecutar en desarrollo:
 
 y el navegador se abrirá solo en http://127.0.0.1:8765
 """
+
 from __future__ import annotations
 
 import threading

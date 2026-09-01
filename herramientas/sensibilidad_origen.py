@@ -134,9 +134,7 @@ def main() -> None:
 
     for i, (corte, semilla) in enumerate(configuraciones, start=1):
         muestra = (
-            random.Random(semilla).sample(series, args.n_series)
-            if semilla is not None
-            else series
+            random.Random(semilla).sample(series, args.n_series) if semilla is not None else series
         )
         marca = etiqueta(corte)
         sufijo = f", semilla={semilla}" if semilla is not None else ""

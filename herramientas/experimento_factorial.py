@@ -56,7 +56,6 @@ from src.infraestructura.persistencia.lector_archivos import LectorVentas
 CORTES_POR_DEFECTO = [0.30, 0.20, 0.10]
 
 
-
 UMBRAL_ALFA = 0.05
 UMBRAL_D = 0.20
 
@@ -88,9 +87,7 @@ def tabla_veredictos(contrastes: pd.DataFrame, detalle: pd.DataFrame) -> pd.Data
     responde «¿la diferencia es distinguible del azar?», y el tamano del efecto
     responde «¿es lo bastante grande como para importar?».
     """
-    piv = detalle.pivot_table(
-        index=["Muestra", "Corte"], columns="Modelo", values="RMSSE mediano"
-    )
+    piv = detalle.pivot_table(index=["Muestra", "Corte"], columns="Modelo", values="RMSSE mediano")
     filas = []
     for comparacion, sub in contrastes.groupby("Comparación"):
         rival = comparacion.replace("Prophet vs ", "")
@@ -106,11 +103,7 @@ def tabla_veredictos(contrastes: pd.DataFrame, detalle: pd.DataFrame) -> pd.Data
 
         if rival in piv.columns:
             dif = (piv["Prophet"] - piv[rival]).median()
-            direccion = (
-                "Prophet obtiene menor RMSSE"
-                if dif < 0
-                else f"{rival} obtiene menor RMSSE"
-            )
+            direccion = "Prophet obtiene menor RMSSE" if dif < 0 else f"{rival} obtiene menor RMSSE"
             direccion += f" (diferencia mediana {abs(dif):.4f})"
         else:
             direccion = "no determinada"
@@ -167,9 +160,11 @@ def tabla_veredictos(contrastes: pd.DataFrame, detalle: pd.DataFrame) -> pd.Data
             }
         )
     orden = {"HE2": 0, "HE3": 1, "HE4": 2, "HE5": 3}
-    return pd.DataFrame(filas).sort_values(
-        "Hipótesis", key=lambda c: c.map(orden)
-    ).reset_index(drop=True)
+    return (
+        pd.DataFrame(filas)
+        .sort_values("Hipótesis", key=lambda c: c.map(orden))
+        .reset_index(drop=True)
+    )
 
 
 def imprimir_veredictos(tabla: pd.DataFrame) -> None:
@@ -204,13 +199,20 @@ def preparar_muestra(
         sys.executable,
         str(RAIZ / "herramientas" / "preparar_favorita.py"),
         str(train),
-        "--modo", "series",
-        "--tiendas", str(tiendas),
-        "--productos-por-tienda", str(productos),
-        "--semilla", str(semilla),
-        "--min-promedio-diario", "30",
-        "--max-prop-ceros", "0.15",
-        "--salida", str(destino),
+        "--modo",
+        "series",
+        "--tiendas",
+        str(tiendas),
+        "--productos-por-tienda",
+        str(productos),
+        "--semilla",
+        str(semilla),
+        "--min-promedio-diario",
+        "30",
+        "--max-prop-ceros",
+        "0.15",
+        "--salida",
+        str(destino),
     ]
 
     # El proceso hijo escribe caracteres como «≥» y «×» en su informe de avance.
@@ -233,9 +235,7 @@ def preparar_muestra(
         errors="replace",
         env=entorno_hijo,
     )
-    registro.write_text(
-        (resultado.stdout or "") + (resultado.stderr or ""), encoding="utf-8"
-    )
+    registro.write_text((resultado.stdout or "") + (resultado.stderr or ""), encoding="utf-8")
     if resultado.returncode != 0:
         print(f"\n  FALLÓ. Últimas líneas (registro completo en {registro.name}):")
         for linea in (resultado.stdout or "").rstrip().splitlines()[-5:]:
@@ -244,9 +244,7 @@ def preparar_muestra(
             print("    " + linea)
         raise SystemExit(f"Fallo al preparar la muestra de la semilla {semilla}.")
     if not destino.is_file() or destino.stat().st_size == 0:
-        raise SystemExit(
-            f"La muestra de la semilla {semilla} quedó vacía. Revise {registro.name}."
-        )
+        raise SystemExit(f"La muestra de la semilla {semilla} quedó vacía. Revise {registro.name}.")
     print(
         f"  muestra preparada en {time.time() - inicio:.0f} s: {destino.name} "
         f"(registro en {registro.name})"
@@ -306,9 +304,7 @@ def main() -> None:
         muestras = []
         for semilla in args.semillas:
             destino = Path(f"muestra_{semilla}.csv")
-            preparar_muestra(
-                args.train, semilla, args.tiendas, args.productos_por_tienda, destino
-            )
+            preparar_muestra(args.train, semilla, args.tiendas, args.productos_por_tienda, destino)
             muestras.append((str(semilla), destino))
         print()
 
@@ -403,9 +399,7 @@ def main() -> None:
     print(tabla_muestra.to_string().replace("\n", "\n    "))
 
     lider_global = conteo.index[0]
-    lideres_por_corte = {
-        c: tabla_corte.loc[c].idxmax() for c in tabla_corte.index
-    }
+    lideres_por_corte = {c: tabla_corte.loc[c].idxmax() for c in tabla_corte.index}
     estable = len(set(lideres_por_corte.values())) == 1 and conteo.iloc[0] == total
 
     print()
@@ -484,9 +478,7 @@ def main() -> None:
                 .reset_index()
             )
             resumen_eq_df.to_excel(writer, sheet_name="Equivalencia HE2-HE5", index=False)
-            tabla_contrastes.to_excel(
-                writer, sheet_name="Contrastes por celda", index=False
-            )
+            tabla_contrastes.to_excel(writer, sheet_name="Contrastes por celda", index=False)
     print(f"\nEvidencia guardada en: {args.salida}")
 
 
