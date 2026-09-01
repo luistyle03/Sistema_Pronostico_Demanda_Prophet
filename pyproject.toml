@@ -2,7 +2,7 @@
 name = "spd-tesis"
 version = "0.1.0"
 description = "Sistema de Pronóstico de Demanda (SPD) basado en el algoritmo Prophet"
-readme = "LEEME.md"
+readme = "README.md"
 
 # Rango CERRADO del intérprete. El límite superior no es decorativo: sin él,
 # el resolutor debe elegir versiones compatibles también con 3.15, 3.16 y
