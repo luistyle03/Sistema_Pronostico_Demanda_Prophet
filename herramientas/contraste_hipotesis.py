@@ -18,6 +18,7 @@ Uso (tras generar la muestra con preparar_favorita.py):
 from __future__ import annotations
 
 import argparse
+import math
 import sys
 from pathlib import Path
 
@@ -129,8 +130,14 @@ def ejecutar(entrada: Path, fraccion_prueba: float, salida: Path) -> None:
                 modelo.entrenar(entrenamiento)
                 pronostico = modelo.pronosticar(n_prueba)
                 valor = metricas.rmsse(entrenamiento.valores(), reales, pronostico.valores)
-            except Exception:
-                valor = float("inf")
+                if not math.isfinite(valor):
+                    raise ValueError("RMSSE no finito")
+            except Exception as error:  # noqa: BLE001 - se registra, no se oculta
+                # No se sustituye por infinito: eso propagaria nan a la media de
+                # diferencias e invalidaria el contraste sin dejar rastro. Se
+                # marca el valor y se descarta el par en la comparacion pareada.
+                valor = float("nan")
+                fallos.append((str(etiqueta), modelo.nombre, type(error).__name__))
             rmsse_por_modelo[modelo.nombre].append(valor)
         print(f"  serie {etiqueta}: lista")
 
