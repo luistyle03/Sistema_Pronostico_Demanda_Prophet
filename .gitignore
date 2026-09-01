@@ -1,3 +1,18 @@
+# Datos derivados del dataset Corporación Favorita (Kaggle).
+# NO se versionan: los términos de la competencia restringen la redistribución.
+favorita_*.csv
+muestra_*.csv
+muestra_*.log
+train.csv
+
+# Artefactos de Office y salidas de ejecución
+~$*
+*.xlsx
+salidas/
+factorial*.xlsx
+sensibilidad_origen.xlsx
+constancia_entorno.txt
+.ruff_cache/
 __pycache__/
 *.py[cod]
 .venv/
@@ -19,9 +34,4 @@ contraste.xlsx
 reporte_pruebas.txt
 datos_demo.csv
 ficha_datos_demo.xlsx
-favorita_*.csv
-
-muestra_*.csv
-muestra_*.log
 factorial.xlsx
-sensibilidad_origen.xlsx
