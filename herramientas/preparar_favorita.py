@@ -264,8 +264,10 @@ def preparar_series(
         f"máximo {max(promedios):.1f}"
     )
     print(
-        "  (Series de mayor volumen y menos ceros producen MAPE más bajo y "
-        "una comparación entre modelos más informativa.)"
+        "  Los criterios de elegibilidad excluyen la demanda intermitente "
+        "(Croston, 1972; Syntetos y Boylan, 2005), ajena a los modelos de "
+        "series continuas evaluados. La restriccion delimita la validez externa "
+        "del estudio y no persigue mejorar ninguna metrica."
     )
 
 
