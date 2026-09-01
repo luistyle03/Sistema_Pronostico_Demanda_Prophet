@@ -59,113 +59,6 @@ def _construir_evaluador() -> EvaluadorDeModelos:
 # completa empíricamente con los tiempos de ejecución medidos por el software.
 # La lista es BALANCEADA: incluye criterios donde Prophet NO gana (velocidad,
 # simplicidad), para no sesgar el resultado a su favor.
-CAPACIDADES = {
-    "Sin config. estadística experta": {
-        "Prophet": 2,
-        "ARIMA": 0,
-        "Holt-Winters": 1,
-        "Promedio móvil": 2,
-        "Regresión lineal": 2,
-    },
-    "Manejo nativo de feriados": {
-        "Prophet": 2,
-        "ARIMA": 0,
-        "Holt-Winters": 0,
-        "Promedio móvil": 0,
-        "Regresión lineal": 0,
-    },
-    "Estacionalidades múltiples": {
-        "Prophet": 2,
-        "ARIMA": 1,
-        "Holt-Winters": 1,
-        "Promedio móvil": 0,
-        "Regresión lineal": 0,
-    },
-    "Tolera datos faltantes": {
-        "Prophet": 2,
-        "ARIMA": 0,
-        "Holt-Winters": 0,
-        "Promedio móvil": 1,
-        "Regresión lineal": 1,
-    },
-    "Intervalos de incertidumbre": {
-        "Prophet": 2,
-        "ARIMA": 2,
-        "Holt-Winters": 1,
-        "Promedio móvil": 0,
-        "Regresión lineal": 1,
-    },
-    "Interpretabilidad": {
-        "Prophet": 2,
-        "ARIMA": 0,
-        "Holt-Winters": 1,
-        "Promedio móvil": 2,
-        "Regresión lineal": 2,
-    },
-    "Simplicidad de implementación": {
-        "Prophet": 1,
-        "ARIMA": 0,
-        "Holt-Winters": 1,
-        "Promedio móvil": 2,
-        "Regresión lineal": 2,
-    },
-}
-SIMBOLO = {2: "Sí", 1: "Parcial", 0: "No"}
-
-
-def imprimir_matriz_operativa(tiempos):
-    """Matriz cualitativa BALANCEADA (análisis documental, NO un cálculo),
-    salvo la fila 'Velocidad', que es empírica (tiempos medidos)."""
-    validos = {m: t for m, t in tiempos.items() if t is not None and math.isfinite(t)}
-    veloc = {m: 0 for m in MODELOS}
-    if validos:
-        orden = sorted(validos, key=validos.get)  # de más rápido a más lento
-        for pos, m in enumerate(orden):
-            veloc[m] = 2 if pos < 2 else (1 if pos < len(orden) - 2 else 0)
-    print("\n" + "=" * 86)
-    print("COMPARACIÓN OPERATIVA — ANÁLISIS DOCUMENTAL CUALITATIVO (NO es un cálculo del software)")
-    print("Criterios derivados de los requisitos del retail. Escala: Sí / Parcial / No.")
-    print("La fila 'Velocidad de cómputo' SÍ es empírica (de los tiempos medidos).")
-    print("=" * 86)
-    print(f"{'Criterio (requisito del retail)':33s}" + "".join(f"{m[:11]:>12s}" for m in MODELOS))
-    puntajes = {m: 0 for m in MODELOS}
-    for criterio, vals in CAPACIDADES.items():
-        fila = f"{criterio:33s}"
-        for m in MODELOS:
-            fila += f"{SIMBOLO[vals[m]]:>12s}"
-            puntajes[m] += vals[m]
-        print(fila)
-    fila = f"{'Velocidad de cómputo (empírica)':33s}"
-    for m in MODELOS:
-        fila += f"{SIMBOLO[veloc[m]]:>12s}"
-        puntajes[m] += veloc[m]
-    print(fila)
-    print("-" * 86)
-    maxp = 2 * (len(CAPACIDADES) + 1)
-    fila = f"{('PUNTAJE (de %d)' % maxp):33s}"
-    for m in MODELOS:
-        fila += f"{puntajes[m]:>12d}"
-    print(fila)
-    return puntajes
-
-
-def imprimir_sintesis(mejor_precision, puntajes_oper, hay_equivalencia):
-    print("\n" + "=" * 86)
-    print("SÍNTESIS — IDONEIDAD INTEGRAL PARA EL RETAIL")
-    print("=" * 86)
-    mejor_oper = max(puntajes_oper, key=puntajes_oper.get)
-    print(f"1) PRECISIÓN (empírica, calculada): el mejor por RMSSE mediano es {mejor_precision}.")
-    if hay_equivalencia:
-        print("   Las pruebas pareadas muestran equivalencia estadística: ninguno domina")
-        print("   significativamente en precisión.")
-    print(f"2) OPERATIVO (documental + velocidad empírica): mayor puntaje = {mejor_oper}.")
-    print("3) CONCLUSIÓN INTEGRAL: ante la equivalencia en precisión, la elección se decide")
-    print(f"   por el perfil operativo; bajo ese criterio, {mejor_oper} resulta el MÁS IDÓNEO.")
-    print("   ADVERTENCIA HONESTA: esta conclusión combina un resultado empírico")
-    print("   (equivalencia) con un análisis documental cualitativo (operativo); la parte")
-    print("   operativa NO es un cálculo del software, sino un juicio fundamentado.")
-
-
 def guardar_excel(lote, destino: Path, entrada: Path, fraccion: float) -> None:
     """Evidencia descargable: una fila por serie y modelo, más las pruebas."""
     wb = Workbook()
@@ -291,33 +184,35 @@ def main() -> None:
             f"{str(r.series_supera_ingenuo) + '/' + str(r.series_evaluadas):>8}{marca}"
         )
 
-    print("\nPRUEBAS PAREADAS (Prophet frente a cada clásico, sobre RMSSE):")
-    hay_equivalencia = True
+    # Se reportan los estadisticos SIN emitir veredicto. La regla de decision
+    # declarada a priori en la seccion 3.6 de la tesis exige la correccion de
+    # Holm sobre la familia de cuatro contrastes y el criterio de tamano del
+    # efecto; ambas cosas las aplica contraste_hipotesis.py, que es la unica
+    # fuente estadistica confirmatoria del estudio. Emitir aqui un veredicto
+    # con una regla distinta produciria dos metodologias para una misma corrida.
+    print("\nPRUEBAS PAREADAS (Prophet frente a cada clasico, sobre RMSSE)")
+    print("  Valores p SIN corregir por multiplicidad. El veredicto de las hipotesis")
+    print("  HE2 a HE5 se emite unicamente con herramientas/contraste_hipotesis.py.")
     for p in lote.pruebas:
-        etiqueta = (
-            "trivial"
-            if abs(p.d_cohen) < 0.2
-            else (
-                "pequeño"
-                if abs(p.d_cohen) < 0.5
-                else "mediano" if abs(p.d_cohen) < 0.8 else "grande"
-            )
-        )
-        significativa = p.p_valor_t < 0.05
-        if significativa:
-            hay_equivalencia = False
-        veredicto = "diferencia SIGNIFICATIVA" if significativa else "diferencia NO significativa"
         print(
             f"  {p.comparacion:<30}p(t)={p.p_valor_t:.4f}  p(W)={p.p_valor_wilcoxon:.4f}  "
-            f"d={p.d_cohen:.2f} ({etiqueta})  -> {veredicto}"
+            f"|d|={p.d_cohen:.3f}"
         )
 
     if lote.series_omitidas:
         print(f"\nSeries omitidas por longitud insuficiente: {len(lote.series_omitidas)}")
 
-    tiempos = {r.nombre_modelo: r.segundos_promedio for r in lote.resumen_por_modelo}
-    puntajes = imprimir_matriz_operativa(tiempos)
-    imprimir_sintesis(ganador.nombre_modelo if ganador else "—", puntajes, hay_equivalencia)
+    # La idoneidad operativa (HE7) NO la calcula este programa: es un analisis
+    # documental que el investigador diligencia sobre la matriz del Instrumento B,
+    # citando la fuente de cada calificacion. El unico insumo empirico que este
+    # programa aporta a esa matriz son los tiempos medidos, que se imprimen para
+    # que se apliquen los umbrales absolutos de la rubrica validada.
+    print("\nTIEMPOS MEDIANOS POR SERIE (insumo empirico del criterio de velocidad)")
+    for r in sorted(lote.resumen_por_modelo, key=lambda x: x.segundos_promedio or math.inf):
+        t = r.segundos_promedio
+        print(f"  {r.nombre_modelo:<20}{t:8.4f} s" if t is not None else f"  {r.nombre_modelo:<20}    n/d")
+    print("  Los niveles del criterio se asignan con la rubrica del Anexo A.4 del")
+    print("  expediente de validacion, no con un ordenamiento relativo.")
 
     guardar_excel(lote, args.salida, args.entrada, args.fraccion_prueba)
     print(f"\nEvidencia guardada en: {args.salida}")
