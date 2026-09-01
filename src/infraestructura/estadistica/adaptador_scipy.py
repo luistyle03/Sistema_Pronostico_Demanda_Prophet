@@ -27,9 +27,28 @@ class AdaptadorPruebasScipy(PuertoPruebasEstadisticas):
     def comparar_pareado(
         self, etiqueta: str, errores_a: Sequence[float], errores_b: Sequence[float]
     ) -> ResultadoPruebaPareada:
-        a = list(errores_a)
-        b = list(errores_b)
-        n = len(a)
+        a_bruto = list(errores_a)
+        b_bruto = list(errores_b)
+        n = len(a_bruto)
+        # POLITICA DE PARES COMPLETOS. Un unico valor no finito -en cualquiera de
+        # los dos vectores- basta para que la media de las diferencias sea inf o
+        # nan y para invalidar en silencio todo el contraste. Se descarta el PAR
+        # completo, no solo el valor, para que el emparejamiento se conserve, y
+        # se informa cuantos quedaron: asi la perdida es visible en la evidencia
+        # en lugar de producir un resultado corrupto sin aviso.
+        pares = [(x, y) for x, y in zip(a_bruto, b_bruto) if math.isfinite(x) and math.isfinite(y)]
+        if len(pares) < 2:
+            return ResultadoPruebaPareada(
+                comparacion=etiqueta,
+                p_valor_t=float("nan"),
+                p_valor_wilcoxon=float("nan"),
+                d_cohen=float("nan"),
+                n=n,
+                diferencia_media=float("nan"),
+                pares_validos=len(pares),
+            )
+        a = [x for x, _ in pares]
+        b = [y for _, y in pares]
         diferencias = [x - y for x, y in zip(a, b)]
         # --- Prueba t pareada -------------------------------------------------
         t_resultado = stats.ttest_rel(a, b)
@@ -40,9 +59,9 @@ class AdaptadorPruebasScipy(PuertoPruebasEstadisticas):
         else:
             p_wilcoxon = float(stats.wilcoxon(a, b).pvalue)
         # --- d de Cohen pareada (d_z) ----------------------------------------
-        media_dif = sum(diferencias) / n
-        if n > 1:
-            varianza = sum((d - media_dif) ** 2 for d in diferencias) / (n - 1)
+        media_dif = sum(diferencias) / len(diferencias)
+        if len(diferencias) > 1:
+            varianza = sum((d - media_dif) ** 2 for d in diferencias) / (len(diferencias) - 1)
             desviacion = math.sqrt(varianza)
         else:
             desviacion = 0.0
@@ -53,4 +72,6 @@ class AdaptadorPruebasScipy(PuertoPruebasEstadisticas):
             p_valor_wilcoxon=p_wilcoxon,
             d_cohen=d_cohen,
             n=n,
+            diferencia_media=media_dif,
+            pares_validos=len(diferencias),
         )
