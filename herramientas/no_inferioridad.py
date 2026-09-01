@@ -95,12 +95,20 @@ def main() -> None:
     print(f"Margen de no inferioridad declarado: delta = {delta:.4f} (unidades de RMSSE)\n")
 
     evaluador = _construir_evaluador()
+    modelos = evaluador_modelos(evaluador)
     rmsse: dict[str, list[float]] = {}
+    descartadas = 0
     for i, serie in enumerate(series, start=1):
         n_prueba = max(1, int(round(len(serie) * args.fraccion_prueba)))
-        entrenamiento, prueba = evaluador.dividir(serie, n_prueba)
+        # Mismo criterio de elegibilidad que contraste_hipotesis.py: una serie
+        # cuyo tramo de ajuste quede por debajo de 30 observaciones no permite
+        # estimar ningun modelo estacional y se descarta antes de evaluar.
+        if len(serie) < n_prueba + 30:
+            descartadas += 1
+            continue
+        entrenamiento, prueba = serie.dividir(n_prueba)
         reales = prueba.valores()
-        for modelo in evaluador_modelos(evaluador):
+        for modelo in modelos:
             try:
                 modelo.entrenar(entrenamiento)
                 pron = modelo.pronosticar(n_prueba)
@@ -112,6 +120,8 @@ def main() -> None:
             rmsse.setdefault(modelo.nombre, []).append(valor)
         print(f"  serie {i}/{len(series)} lista", end="\r", flush=True)
     print(" " * 40, end="\r")
+    if descartadas:
+        print(f"  Series descartadas por historia insuficiente: {descartadas}")
 
     sistema = next(iter(rmsse))
     filas = []
