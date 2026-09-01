@@ -90,7 +90,12 @@ def verificacion_valores_conocidos() -> list[dict]:
 # (B) VALIDACIÓN CONCURRENTE CONTRA scikit-learn
 # ===========================================================================
 def validacion_concurrente() -> list[dict]:
-    """Mismos datos en el software y en scikit-learn; deben coincidir."""
+    """Mismos datos en el software y en referencias externas; deben coincidir.
+
+    MAE y RMSE se contrastan contra scikit-learn. El sesgo, el WAPE y el RMSSE
+    no existen en esa libreria, de modo que se contrastan contra oraculos
+    independientes implementados con numpy desde la definicion publicada.
+    """
     rng = np.random.default_rng(2026)
     reales = rng.uniform(5, 100, size=200)
     pred = reales + rng.normal(0, 8, size=200)  # pronóstico con error realista
@@ -108,6 +113,25 @@ def validacion_concurrente() -> list[dict]:
     sw_sesgo = metricas.sesgo(list(reales), list(pred))
     np_sesgo = float(np.mean(reales - pred))
     filas.append(("Sesgo", sw_sesgo, np_sesgo, "numpy: mean(real - pred)"))
+
+    # RMSSE y WAPE no existen en scikit-learn. Para que la validacion concurrente
+    # los cubra igualmente se construyen ORACULOS INDEPENDIENTES con numpy: son
+    # implementaciones escritas desde la definicion publicada, sin reutilizar una
+    # sola linea del modulo bajo prueba. Sin esto, las dos metricas principales
+    # del estudio quedaban acreditadas unicamente contra el calculo manual, que
+    # no descarta un malentendido conceptual compartido entre el investigador y
+    # su implementacion.
+    # WAPE = 100 * suma|real - pred| / suma(real)   (Hyndman y Koehler, 2006)
+    sw_wape = metricas.wape(list(reales), list(pred))
+    np_wape = float(100.0 * np.abs(reales - pred).sum() / reales.sum())
+    filas.append(("WAPE", sw_wape, np_wape, "numpy: 100*sum|e|/sum(y)"))
+    # RMSSE = sqrt( MSE_modelo / MSE_ingenuo_de_un_paso_en_entrenamiento )  (M5)
+    entrenamiento = rng.uniform(5, 100, size=300)
+    sw_rmsse = metricas.rmsse(list(entrenamiento), list(reales), list(pred))
+    mse_modelo = float(np.mean((reales - pred) ** 2))
+    mse_naive1 = float(np.mean(np.diff(entrenamiento) ** 2))
+    np_rmsse = float(np.sqrt(mse_modelo / mse_naive1))
+    filas.append(("RMSSE", sw_rmsse, np_rmsse, "numpy: sqrt(MSE / MSE naive-1)"))
 
     salida = []
     for nombre, sw, ref, herramienta in filas:
