@@ -48,12 +48,18 @@ jobs:
       - name: Verificar integridad de imports
         run: uv run python verificar_integridad.py
 
-      - name: Ejecutar la bateria de 32 pruebas
-        run: uv run python -m pytest pruebas -v
+      - name: Ejecutar la bateria de 32 pruebas con cobertura
+        run: uv run python -m pytest pruebas -v --cov=src --cov-report=term-missing
 
-      # Ruff viaja en uv.lock: es el MISMO binario que en la maquina local.
-      - name: Revisar el estilo PEP 8
-        run: uv run ruff check src pruebas herramientas entorno.py run.py verificar_integridad.py
+      # Ruff y black viajan en uv.lock: son los MISMOS binarios que en la maquina
+      # local. El alcance cubre TODOS los archivos Python del repositorio; dejar
+      # alguno fuera haria que la afirmacion de conformidad de estilo fuese
+      # parcial sin declararlo.
+      - name: Revisar el estilo (pycodestyle-E, pyflakes, orden de imports)
+        run: uv run ruff check .
+
+      - name: Comprobar el formato con black
+        run: uv run black --check .
 
       - name: Generar constancia descargable
         if: always()
