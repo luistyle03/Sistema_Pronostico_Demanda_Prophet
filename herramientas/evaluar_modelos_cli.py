@@ -210,7 +210,8 @@ def main() -> None:
     print("\nTIEMPOS MEDIANOS POR SERIE (insumo empirico del criterio de velocidad)")
     for r in sorted(lote.resumen_por_modelo, key=lambda x: x.segundos_promedio or math.inf):
         t = r.segundos_promedio
-        print(f"  {r.nombre_modelo:<20}{t:8.4f} s" if t is not None else f"  {r.nombre_modelo:<20}    n/d")
+        medida = f"{t:8.4f} s" if t is not None else "     n/d"
+        print(f"  {r.nombre_modelo:<20}{medida}")
     print("  Los niveles del criterio se asignan con la rubrica del Anexo A.4 del")
     print("  expediente de validacion, no con un ordenamiento relativo.")
 
