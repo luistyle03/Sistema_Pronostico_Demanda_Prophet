@@ -112,6 +112,8 @@ def ejecutar(entrada: Path, fraccion_prueba: float, salida: Path) -> None:
     series = lector.construir_series_lote(tabla)
     modelos = _modelos_del_experimento()
     rmsse_por_modelo: dict[str, list[float]] = {m.nombre: [] for m in modelos}
+
+    fallos: list[tuple[str, str, str]] = []
     descartadas = []
 
     for serie in series:
