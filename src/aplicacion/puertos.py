@@ -63,6 +63,14 @@ class ResultadoPruebaPareada:
     p_valor_wilcoxon: float
     d_cohen: float
     n: int
+    # Media de las diferencias CON SIGNO (a - b). La d de Cohen se reporta en
+    # valor absoluto porque mide magnitud, no direccion; el sentido de la
+    # diferencia se lee aqui: negativo significa que el primer modelo obtiene
+    # menor error que el segundo.
+    diferencia_media: float = 0.0
+    # Pares efectivamente utilizados tras descartar los no finitos. Si es menor
+    # que n, hubo ajustes que fallaron en alguna serie.
+    pares_validos: int = 0
 
 
 class PuertoPruebasEstadisticas(ABC):
