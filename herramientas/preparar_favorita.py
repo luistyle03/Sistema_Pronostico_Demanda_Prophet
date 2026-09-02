@@ -28,7 +28,10 @@ selecciona series de demanda REGULAR mediante dos filtros explícitos y
 documentables:
   --min-promedio-diario : unidades/día promedio mínimas (sobre el calendario
                           completo). Filtra productos de bajo volumen.
-  --max-prop-ceros      : proporción máxima de días sin venta. Filtra la
+  --max-prop-ceros      : proporción máxima de días SIN REGISTRO en el archivo
+                          (no de días con unit_sales == 0: el dataset omite
+                          la mayoría de esos días, de modo que ambas magnitudes
+                          casi coinciden pero no son la misma). Filtra la
                           intermitencia.
 Estos umbrales DEBEN reportarse en la metodología de la tesis como el criterio
 que define la población de estudio (SKU de demanda regular en retail MIPYME).
@@ -176,7 +179,13 @@ def preparar_series(
     for clave, d in dias.items():
         examinados += 1
         promedio_diario = volumen[clave] / N_DIAS_CALENDARIO
-        prop_ceros = 1.0 - (d / N_DIAS_CALENDARIO)
+        # ATENCION: mide la proporcion de dias SIN FILA en el archivo, no la de
+        # dias con unit_sales == 0. En el dataset Favorita los dias sin venta se
+        # omiten, de modo que ambas magnitudes casi coinciden; no obstante, una
+        # fila con unit_sales == 0 cuenta aqui como dia con registro. El nombre
+        # del criterio y su interpretacion en la tesis deben reflejar esto.
+        prop_sin_registro = 1.0 - (d / N_DIAS_CALENDARIO)
+        prop_ceros = prop_sin_registro
         if (
             d >= min_dias_con_venta
             and promedio_diario >= min_promedio_diario
@@ -190,7 +199,7 @@ def preparar_series(
         f"  Series candidatas (demanda regular): {n_candidatos} de {examinados} "
         f"pares evaluados.\n"
         f"  Criterio: ≥{min_dias_con_venta} días con venta, "
-        f"≥{min_promedio_diario:g} u/día promedio, ≤{max_prop_ceros:.0%} días en cero."
+        f"≥{min_promedio_diario:g} u/día promedio, ≤{max_prop_ceros:.0%} días sin registro."
     )
 
     tiendas_validas = sorted(
