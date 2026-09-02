@@ -28,6 +28,7 @@ dist/
 
 # Artefactos generados (no se versionan)
 validacion_instrumento.xlsx
+validacion.txt
 resultados_evaluacion.xlsx
 robustez.xlsx
 contraste.xlsx
