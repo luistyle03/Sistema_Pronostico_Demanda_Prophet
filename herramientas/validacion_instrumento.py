@@ -166,7 +166,8 @@ def main() -> None:
     print(
         "VEREDICTO:",
         (
-            "INSTRUMENTO VÁLIDO — todas las métricas coinciden."
+            "VERIFICACION NUMERICA CONFORME - todas las metricas coinciden "
+            "dentro de la tolerancia declarada"
             if todos_ok
             else "REVISAR — alguna métrica no coincide."
         ),
@@ -177,6 +178,12 @@ def main() -> None:
     with pd.ExcelWriter(salida) as w:
         pd.DataFrame(a).to_excel(w, sheet_name="A - Valores conocidos", index=False)
         pd.DataFrame(b).to_excel(w, sheet_name="B - Validez concurrente", index=False)
+    print(
+        "Alcance: esta comprobacion acredita la exactitud del calculo frente a\n"
+        "referencias externas. NO establece por si sola la validez del\n"
+        "instrumento, que requiere ademas la evidencia de contenido (juicio de\n"
+        "expertos) y la de constructo documentadas en el expediente."
+    )
     print(f"Evidencia guardada en: {salida}")
 
 
