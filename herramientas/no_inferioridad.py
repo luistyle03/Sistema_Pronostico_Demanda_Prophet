@@ -22,7 +22,10 @@ REGLA DE DECISION. Si el limite superior del intervalo es menor que delta, se
 concluye NO INFERIORIDAD: se ha demostrado, con 95 % de confianza, que el
 sistema no es peor que el competidor por mas de delta. Si ademas el limite
 inferior es mayor que -delta, se concluye EQUIVALENCIA en sentido estricto,
-que es la prueba TOST de dos pruebas unilaterales.
+que es una version conservadora de la prueba TOST: el TOST estandar con alfa
+0,05 se representa con un intervalo del 90 %, de modo que exigir el bilateral
+del 95 % impone una condicion mas estricta. Se emplea la version conservadora
+y se nombra explicitamente para no inducir a confusion.
 
 SOBRE EL MARGEN. delta se expresa en unidades de RMSSE, que es una razon
 respecto del error del metodo ingenuo de un paso. Un delta de 0,05 significa
@@ -136,7 +139,8 @@ def main() -> None:
         no_inferior = ls_uni < delta
         equivalente = ls < delta and li > -delta
         veredicto = (
-            "EQUIVALENCIA (TOST): el intervalo bilateral cae dentro de ±delta"
+            "EQUIVALENCIA (IC bilateral 95 %, mas estricto que TOST): "
+            "el intervalo cae dentro de ±delta"
             if equivalente
             else (
                 "NO INFERIORIDAD: el limite superior queda por debajo de delta"
@@ -155,7 +159,7 @@ def main() -> None:
                 "Límite superior unilateral 95 %": round(ls_uni, 5),
                 "Margen δ": delta,
                 "¿No inferior?": "Sí" if no_inferior else "No",
-                "¿Equivalente (TOST)?": "Sí" if equivalente else "No",
+                "¿Equivalente (IC 95 %)?": "Sí" if equivalente else "No",
                 "Veredicto": veredicto,
             }
         )
